@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -128,16 +129,24 @@ fun choiceScreen(navController: NavHostController) {
             Spacer(modifier = Modifier.height(24.dp))
 
             // Sign In Link
-            TextButton(
-                onClick = {navController.navigate("signin")},
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Already have an account? Sign In",
+                    text = "Already have an account? ",
+                    color = Color.White,
+                    fontSize = 15.sp
+                )
+                Text(
+                    text = "Sign In",
                     color = Color.White,
                     fontSize = 15.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Bold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable {
+                        navController.navigate("signin")
+                    }
                 )
             }
         }

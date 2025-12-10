@@ -1,6 +1,7 @@
 package com.example.learnilmworld.trainer
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -27,9 +28,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +42,8 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
@@ -46,6 +52,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,21 +65,30 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.learnilmworld.viewModel.AuthState
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 @Composable
-fun TrainerSignupScreen(navController: NavHostController) {
+fun TrainerSignupScreen(navController: NavHostController,
+                        viewModel: AuthViewModel) {
+    val authState by viewModel.authState.collectAsState()
+    val context = LocalContext.current
+
     var firstName by remember { mutableStateOf("") }
     var lastName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var selectedLanguages by remember { mutableStateOf(setOf<String>()) }
     var subjectsCanTeach by remember { mutableStateOf("") }
@@ -84,6 +101,22 @@ fun TrainerSignupScreen(navController: NavHostController) {
     var resumeUri by remember { mutableStateOf<Uri?>(null) }
     var resumeFileName by remember { mutableStateOf<String?>(null) }
     var hourlyRate by remember { mutableStateOf("") }
+    var teachingStyle by remember { mutableStateOf("Conversational") }
+    var isLoading by remember { mutableStateOf(false) }
+
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+
+    // Error states
+    var firstNameError by remember { mutableStateOf(false) }
+    var lastNameError by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
+    var confirmPasswordError by remember { mutableStateOf(false) }
+    var phoneError by remember { mutableStateOf(false) }
+    var languagesError by remember { mutableStateOf(false) }
+    var experienceError by remember { mutableStateOf(false) }
+    var hourlyRateError by remember { mutableStateOf(false) }
 
     val languages = listOf("Spanish", "French", "German", "Italian", "Japanese", "Korean", "Mandarin", "Portuguese")
     val standards = listOf("5-8", "5-10", "5-12", "Others")
@@ -94,9 +127,54 @@ fun TrainerSignupScreen(navController: NavHostController) {
     ) { uri: Uri? ->
         uri?.let {
             resumeUri = it
-            // Extract file name from URI (simplified version)
             resumeFileName = it.lastPathSegment ?: "resume.pdf"
         }
+    }
+
+    // Handle authentication state
+    LaunchedEffect(authState) {
+        when (val state = authState) {
+            is AuthState.Success -> {
+                isLoading = false
+                Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                val route = if (state.user.userType == "TRAINER") {
+                    "trainer_home"
+                } else {
+                    "student_home"
+                }
+                navController.navigate(route) {
+                    popUpTo("trainer_signup") { inclusive = true }
+                }
+                viewModel.resetState()
+            }
+            is AuthState.Error -> {
+                isLoading = false
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.resetState()
+            }
+            is AuthState.Loading -> {
+                isLoading = true
+            }
+            else -> {
+                isLoading = false
+            }
+        }
+    }
+
+    fun validateFields(): Boolean {
+        firstNameError = firstName.isBlank()
+        lastNameError = lastName.isBlank()
+        emailError = email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        passwordError = password.isBlank() || password.length < 6
+        confirmPasswordError = confirmPassword.isBlank() || password != confirmPassword
+        phoneError = phone.isBlank()
+        languagesError = selectedLanguages.isEmpty()
+        experienceError = experience.isBlank()
+        hourlyRateError = hourlyRate.isBlank() || hourlyRate.toDoubleOrNull() == null
+
+        return !firstNameError && !lastNameError && !emailError &&
+                !passwordError && !confirmPasswordError && !phoneError &&
+                !languagesError && !experienceError && !hourlyRateError
     }
 
     Box(
@@ -150,17 +228,31 @@ fun TrainerSignupScreen(navController: NavHostController) {
             ) {
                 FormTextField(
                     value = firstName,
-                    onValueChange = { firstName = it },
+                    onValueChange = {
+                        firstName = it
+                        firstNameError = false
+                    },
                     label = "First Name",
                     placeholder = "First name",
                     modifier = Modifier.weight(1f)
                 )
                 FormTextField(
                     value = lastName,
-                    onValueChange = { lastName = it },
+                    onValueChange = {
+                        lastName = it
+                        lastNameError = false
+                    },
                     label = "Last Name",
                     placeholder = "Last name",
                     modifier = Modifier.weight(1f)
+                )
+            }
+            if (firstNameError || lastNameError) {
+                Text(
+                    text = "First and last name are required",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
                 )
             }
 
@@ -168,31 +260,153 @@ fun TrainerSignupScreen(navController: NavHostController) {
 
             FormTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = {
+                    email = it
+                    emailError = false
+                },
                 label = "Email Address",
                 placeholder = "Enter your email address",
                 keyboardType = KeyboardType.Email
             )
+            if (emailError) {
+                Text(
+                    text = "Please enter a valid email address",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            FormTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
-                placeholder = "Enter password",
-                isPassword = true
-            )
+            // Password field with eye icon
+            Column {
+                Text(
+                    text = "Password",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        passwordError = false
+                    },
+                    placeholder = { Text("Enter password") },
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (passwordVisible) "Hide password" else "Show password",
+                                tint = Color(0xFF667eea)
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White.copy(alpha = 0.95f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = Color(0xFF667eea),
+                        unfocusedTextColor = Color(0xFF667eea),
+                        focusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f)
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true
+                )
+                if (passwordError) {
+                    Text(
+                        text = "Password must be at least 6 characters",
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Confirm Password field with eye icon
+            Column {
+                Text(
+                    text = "Confirm Password",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = {
+                        confirmPassword = it
+                        confirmPasswordError = false
+                    },
+                    placeholder = { Text("Confirm password") },
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                            Icon(
+                                imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
+                                tint = Color(0xFF667eea)
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .shadow(4.dp, RoundedCornerShape(16.dp)),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White.copy(alpha = 0.95f),
+                        unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedTextColor = Color(0xFF667eea),
+                        unfocusedTextColor = Color(0xFF667eea),
+                        focusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f)
+                    ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    singleLine = true
+                )
+                if (confirmPasswordError) {
+                    Text(
+                        text = if (confirmPassword.isBlank()) "Please confirm your password" else "Passwords do not match",
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
             FormTextField(
                 value = phone,
-                onValueChange = { phone = it },
+                onValueChange = {
+                    phone = it
+                    phoneError = false
+                },
                 label = "Phone Number",
                 placeholder = "Enter your mobile number",
                 keyboardType = KeyboardType.Phone
             )
+            if (phoneError) {
+                Text(
+                    text = "Phone number is required",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -206,8 +420,17 @@ fun TrainerSignupScreen(navController: NavHostController) {
                     } else {
                         selectedLanguages + language
                     }
+                    languagesError = false
                 }
             )
+            if (languagesError) {
+                Text(
+                    text = "Please select at least one language",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -221,7 +444,6 @@ fun TrainerSignupScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Standards Radio Button Section
             StandardsSelector(
                 label = "Standards You Can Teach",
                 standards = standards,
@@ -237,15 +459,26 @@ fun TrainerSignupScreen(navController: NavHostController) {
                 label = "Teaching Experience",
                 options = listOf("1-2 years", "3-5 years", "5+ years"),
                 selectedOption = experience,
-                onOptionSelected = { experience = it }
+                onOptionSelected = {
+                    experience = it
+                    experienceError = false
+                }
             )
+            if (experienceError) {
+                Text(
+                    text = "Please select your experience level",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
             FormTextField(
                 value = certification,
                 onValueChange = { certification = it },
-                label = "Certification/Qualification",
+                label = "Certification/Qualification (Optional)",
                 placeholder = "e.g., TEFL, CELTA, Native Speaker"
             )
 
@@ -254,7 +487,7 @@ fun TrainerSignupScreen(navController: NavHostController) {
             FormTextField(
                 value = bio,
                 onValueChange = { bio = it },
-                label = "Brief Bio",
+                label = "Brief Bio (Optional)",
                 placeholder = "Tell us about your teaching experience and methodology...",
                 singleLine = false,
                 minLines = 4
@@ -262,7 +495,6 @@ fun TrainerSignupScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Resume Upload Section
             ResumeUploadSection(
                 resumeFileName = resumeFileName,
                 onUploadClick = { resumePicker.launch("application/pdf") },
@@ -276,41 +508,92 @@ fun TrainerSignupScreen(navController: NavHostController) {
 
             FormTextField(
                 value = hourlyRate,
-                onValueChange = { hourlyRate = it },
+                onValueChange = {
+                    hourlyRate = it
+                    hourlyRateError = false
+                },
                 label = "Hourly Rate (USD)",
                 placeholder = "e.g. 25",
                 keyboardType = KeyboardType.Number
             )
+            if (hourlyRateError) {
+                Text(
+                    text = "Please enter a valid hourly rate",
+                    color = Color.Red,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(28.dp))
 
-            SubmitButton(
-                text = "Create Trainer Account",
+            Button(
                 onClick = {
-                    navController.navigate("trainer_home"){
-                        popUpTo("authentication") { inclusive = true }                    }
+                    if (validateFields()) {
+                        val yearsOfExperience = when (experience) {
+                            "1-2 years" -> 1
+                            "3-5 years" -> 3
+                            "5+ years" -> 5
+                            else -> 0
+                        }
+
+                        val finalStandard = if (selectedStandard == "Others") {
+                            customStandard
+                        } else {
+                            selectedStandard
+                        }
+
+                        viewModel.registerTrainer(
+                            email = email,
+                            password = password,
+                            fullName = "$firstName ",
+                            lastName = "$lastName",
+                            phoneNumber = phone,
+                            bio = bio,
+                            yearsOfExperience = yearsOfExperience,
+                            hourlyRate = hourlyRate.toDoubleOrNull() ?: 0.0,
+                            teachingStyle = teachingStyle,
+                            languagesToTeach = selectedLanguages.toList(),
+                            specializations = subjectsCanTeach.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                            certification = certification,
+                            nationality = ""
+                        )
+                    } else {
+                        Toast.makeText(context, "Please fill all required fields correctly", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .shadow(10.dp, RoundedCornerShape(18.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.White
+                ),
+                shape = RoundedCornerShape(18.dp),
+                enabled = !isLoading
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF667eea)
+                    )
+                } else {
+                    Text(
+                        text = "Create Trainer Account",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF667eea),
+                        letterSpacing = 0.5.sp
+                    )
                 }
-            )
+            }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-//            SocialLoginDivider()
-//
-//            Spacer(modifier = Modifier.height(24.dp))
-
-//            SocialLoginButtons(
-//                onGoogleClick = { /* Google login */ },
-//                onSecondaryClick = { /* LinkedIn login */ },
-//                secondaryText = "LinkedIn",
-//                secondaryEmoji = "💼"
-//            )
-
-//            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-// New Standards Selector Component
+// Keep all other composable functions unchanged
 @Composable
 fun StandardsSelector(
     label: String,
@@ -364,7 +647,6 @@ fun StandardsSelector(
                     }
                 }
 
-                // Custom standard input field
                 if (selectedStandard == "Others") {
                     Spacer(modifier = Modifier.height(12.dp))
                     TextField(
@@ -387,7 +669,6 @@ fun StandardsSelector(
     }
 }
 
-// New Resume Upload Component
 @Composable
 fun ResumeUploadSection(
     resumeFileName: String?,
@@ -396,7 +677,7 @@ fun ResumeUploadSection(
 ) {
     Column {
         Text(
-            text = "Upload Resume",
+            text = "Upload Resume (Optional)",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
@@ -404,7 +685,6 @@ fun ResumeUploadSection(
         )
 
         if (resumeFileName == null) {
-            // Upload button
             Surface(
                 onClick = onUploadClick,
                 modifier = Modifier
@@ -436,7 +716,6 @@ fun ResumeUploadSection(
                 }
             }
         } else {
-            // Display uploaded file
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()

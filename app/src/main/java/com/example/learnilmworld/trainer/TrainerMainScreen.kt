@@ -23,23 +23,25 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.learnilmworld.screen.TrainerScreen
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 @Composable
-fun TrainerMainScreen(trainerName: String = "Hariom Rajak") {
-    val navController = rememberNavController()
+fun TrainerMainScreen(viewModel: AuthViewModel,
+                      navController: NavHostController) {
+    val bottomNavController = rememberNavController()
 
     Scaffold(
         bottomBar = {
-            TrainerBottomNavigationBar(navController = navController)
+            TrainerBottomNavigationBar(navController = bottomNavController)
         }
     ) { paddingValues ->
         NavHost(
-            navController = navController,
+            navController = bottomNavController,
             startDestination = TrainerScreen.Dashboard.route,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(TrainerScreen.Dashboard.route) {
-                TrainerDashboardScreen(trainerName = trainerName)
+                TrainerDashboardScreen(viewModel)
             }
             composable(TrainerScreen.Sessions.route) {
                 TrainerSessionsScreen()
@@ -51,7 +53,7 @@ fun TrainerMainScreen(trainerName: String = "Hariom Rajak") {
                 TrainerReviewsScreen()
             }
             composable(TrainerScreen.Profile.route) {
-                TrainerProfileScreen()
+                TrainerProfileScreen(viewModel,navController)
             }
         }
     }

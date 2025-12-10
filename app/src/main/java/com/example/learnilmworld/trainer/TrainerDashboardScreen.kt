@@ -12,6 +12,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -25,9 +27,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.learnilmworld.R
 import com.example.learnilmworld.screen.TrainerStatsCard
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 @Composable
-fun TrainerDashboardScreen(trainerName: String) {
+fun TrainerDashboardScreen(viewModel: AuthViewModel) {
+    val currentUser by viewModel.currentUser.collectAsState()
+
     val statsCards = listOf(
         TrainerStatsCard(
             icon = "📖",
@@ -92,7 +97,7 @@ fun TrainerDashboardScreen(trainerName: String) {
         ) {
             // Welcome Header
             item {
-                WelcomeHeader(trainerName = trainerName)
+                WelcomeHeader(trainerName = currentUser?.fullName ?: " ")
             }
 
             // Stats Cards Grid

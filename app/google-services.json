@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "437524038092",
+    "project_id": "learnilmworld-e27a5",
+    "storage_bucket": "learnilmworld-e27a5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437524038092:android:57664642d8208005ac9d69",
+        "android_client_info": {
+          "package_name": "com.example.learnilmworld"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBpm-jkTy4_zdFq5zgivuD1fAGdIATQakc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

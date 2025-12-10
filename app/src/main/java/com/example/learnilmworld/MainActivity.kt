@@ -5,6 +5,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -13,6 +18,7 @@ import com.example.learnilmworld.student.StudentMainScreen
 import com.example.learnilmworld.student.StudentSignupScreen
 import com.example.learnilmworld.trainer.TrainerMainScreen
 import com.example.learnilmworld.trainer.TrainerSignupScreen
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,6 +31,23 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun AppNavigation() {
         val navController = rememberNavController()
+        val viewModel: AuthViewModel = viewModel()
+        val authState by viewModel.authState.collectAsState()
+        val currentUser by viewModel.currentUser.collectAsState()
+        // Auto-navigate on app start if user is logged in
+
+//        LaunchedEffect(currentUser) {
+//            currentUser?.let { user ->
+//                val route = if (user.userType == "STUDENT") {
+//                    "student_home"
+//                } else {
+//                    "trainer_home"
+//                }
+//                navController.navigate(route) {
+//                    popUpTo(0) { inclusive = true }
+//                }
+//            }
+//        }
 
         NavHost(
             navController = navController,
@@ -43,19 +66,19 @@ class MainActivity : ComponentActivity() {
                 choiceScreen(navController)
             }
             composable("signin") {
-                SigninScreen(navController)
+                SigninScreen(navController,viewModel)
             }
             composable(Screen.StudentSignup.route) {
-                StudentSignupScreen(navController)
+                StudentSignupScreen(navController,viewModel)
             }
             composable("student_home") {
-                StudentMainScreen()
+                StudentMainScreen(viewModel,navController)
             }
             composable("trainer_home") {
-                TrainerMainScreen(trainerName = "Hariom Rajak")
+                TrainerMainScreen(viewModel,navController)
             }
             composable(Screen.TrainerSignup.route) {
-                TrainerSignupScreen(navController)
+                TrainerSignupScreen(navController,viewModel)
             }
         }
     }

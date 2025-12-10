@@ -1,10 +1,14 @@
 package com.example.learnilmworld.trainer
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,17 +20,20 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 @Composable
-fun TrainerProfileScreen() {
+fun TrainerProfileScreen(viewModel: AuthViewModel,
+                         navController: NavHostController) {
     var profileImageUrl by remember { mutableStateOf("") }
-    var fullName by remember { mutableStateOf("Hariom Rajak") }
-    var email by remember { mutableStateOf("functionaldevelopers314@gmail.com") }
-    var phoneNumber by remember { mutableStateOf("918305005503") }
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var phoneNumber by remember { mutableStateOf("") }
     var nationality by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("nothing to describe") }
-    var yearsOfExperience by remember { mutableStateOf("5") }
+    var yearsOfExperience by remember { mutableStateOf("") }
     var hourlyRate by remember { mutableStateOf("25") }
     var teachingStyle by remember { mutableStateOf("Conversational") }
     var isAvailableForBookings by remember { mutableStateOf(true) }
@@ -34,7 +41,7 @@ fun TrainerProfileScreen() {
     var newLanguage by remember { mutableStateOf("") }
     var specializations by remember { mutableStateOf(listOf("maths", "english")) }
     var newSpecialization by remember { mutableStateOf("") }
-    var standards by remember { mutableStateOf(listOf("5-12")) }
+    var standards by remember { mutableStateOf(listOf("")) }
     var newStandard by remember { mutableStateOf("") }
     var demoVideoUrl by remember { mutableStateOf("") }
     var instagramUrl by remember { mutableStateOf("") }
@@ -43,6 +50,23 @@ fun TrainerProfileScreen() {
 
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     var availableDays by remember { mutableStateOf(setOf<String>()) }
+
+    val currentUser by viewModel.currentUser.collectAsState()
+
+    // Pre-fill form with current user data
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            // Set your state variables with user data
+            fullName = user.fullName
+            email = user.email
+            phoneNumber = user.phoneNumber
+            nationality = user.nationality
+            location = user.location
+            bio = user.bio
+            
+
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -418,6 +442,38 @@ fun TrainerProfileScreen() {
                             fontWeight = FontWeight.Bold
                         )
                     }
+                }
+            }
+            item {
+                OutlinedButton(
+                    onClick = {
+                        viewModel.logout()
+                        navController.navigate("choicescreen") {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = Color.Transparent,
+                        contentColor = Color(0xFFDC2626)
+                    ),
+                    border = BorderStroke(2.dp, Color(0xFFDC2626)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = "Logout",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Logout",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 

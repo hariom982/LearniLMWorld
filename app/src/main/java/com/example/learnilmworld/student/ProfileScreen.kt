@@ -13,6 +13,8 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
@@ -27,18 +29,53 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.example.learnilmworld.viewModel.AuthState
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(viewModel: AuthViewModel,
+                  navController: NavHostController) {
+    val currentUser by viewModel.currentUser.collectAsState()
+    val authState by viewModel.authState.collectAsState()
+
     var profileImageUrl by remember { mutableStateOf("") }
-    var fullName by remember { mutableStateOf("Hariom Rajak") }
-    var email by remember { mutableStateOf("hariomrajak656@gmail.com") }
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var bio by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("918305005503") }
+    var phoneNumber by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
     var qualification by remember { mutableStateOf("") }
     var college by remember { mutableStateOf("") }
+
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            // Set your state variables with user data
+            fullName = user.fullName
+            email = user.email
+            phoneNumber = user.phoneNumber
+            email = user.email
+            bio = user.bio
+            location = user.location
+            qualification = user.qualification
+            college = user.college
+        }
+    }
+
+//    LaunchedEffect(authState) {
+//        when (authState) {
+//            is AuthState.Error -> {
+//                // Navigate to choice screen and clear back stack
+//                navController.navigate("choice") {
+//                    popUpTo(0) { inclusive = true }
+//                }
+//                viewModel.resetState()
+//            }
+//            else -> {}
+//        }
+//    }
 
     Box(
         modifier = Modifier
@@ -193,7 +230,11 @@ fun ProfileScreen() {
             item {
                 OutlinedButton(
                     onClick = {
-                        // Handle logout
+                        viewModel.logout()
+                        navController.navigate("choicescreen") {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()

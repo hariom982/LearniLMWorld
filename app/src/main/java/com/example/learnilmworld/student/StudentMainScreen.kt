@@ -17,24 +17,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.learnilmworld.screen.StudentScreen
+import com.example.learnilmworld.viewModel.AuthViewModel
 
 @Composable
-fun StudentMainScreen() {
-    val navController = rememberNavController()
+fun StudentMainScreen(viewModel: AuthViewModel,
+                      navController: NavHostController) {
+    val bottomNavController = rememberNavController()
 
     Scaffold(
         bottomBar = {
-            StudentBottomNavigationBar(navController = navController)
+            StudentBottomNavigationBar(navController = bottomNavController)
         }
     ) { paddingValues ->
         NavHost(
-            navController = navController,
+            navController = bottomNavController,
             startDestination = StudentScreen.Home.route,
             modifier = Modifier.padding(paddingValues)
         ) {
@@ -48,7 +51,7 @@ fun StudentMainScreen() {
                 SessionsScreen()
             }
             composable(StudentScreen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(viewModel = viewModel, navController = navController)
             }
         }
     }
