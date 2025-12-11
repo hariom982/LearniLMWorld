@@ -42,7 +42,7 @@ fun StudentMainScreen(viewModel: AuthViewModel,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(StudentScreen.Home.route) {
-                StudentHomeScreen()
+                StudentHomeScreen(navController)
             }
             composable(StudentScreen.Dashboard.route) {
                 DashboardScreen()

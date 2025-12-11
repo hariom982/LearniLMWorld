@@ -1,162 +1,357 @@
 package com.example.learnilmworld.trainer
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Videocam
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.*
 
+data class TrainerSessionRequest(
+    val id: String = "",
+    val studentId: String = "",
+    val trainerId: String = "",
+    val trainerName: String = "",
+    val studentName: String = "",
+    val date: Date? = null,
+    val timeSlot: String = "",
+    val duration: Int = 0,
+    val description: String = "",
+    val language: String = "",
+    val level: String = "",
+    val status: String = "pending",
+    val totalPrice: Double = 0.0,
+    val roomId: String = "",
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TrainerSessionsScreen() {
-    // Sample sessions data
-    val sessions = listOf(
-        SessionItem(
-            title = "Session 4",
-            studentCount = "1 student(s)",
-            dateTime = "Oct 13, 2025, 3:52 AM",
-            description = "session description",
-            duration = "60m",
-            language = "Language",
-            level = "intermediate",
-            roomId = "admin-session-012a90d6-105a-4243-96ee-744787d8e19d",
-            status = SessionStatus.COMPLETED
-        ),
-        SessionItem(
-            title = "Session 3",
-            studentCount = "1 student(s)",
-            dateTime = "Oct 22, 2025, 11:47 AM",
-            description = "3rd learning session",
-            duration = "60m",
-            language = "Language",
-            level = "intermediate",
-            roomId = "admin-session-1245ba69-fb1f-494e-908a-99feb8644515",
-            status = SessionStatus.ACTIVE
-        ),
-        SessionItem(
-            title = "Hindi session",
-            studentCount = "1 student(s)",
-            dateTime = "Dec 12, 2020, 12:12 PM",
-            description = "Learn Hindi lang",
-            duration = "60m",
-            language = "Language",
-            level = "intermediate",
-            roomId = "admin-session-xyz123",
-            status = SessionStatus.SCHEDULED
-        )
-    )
+    var sessionRequests by remember { mutableStateOf<List<TrainerSessionRequest>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var selectedTab by remember { mutableStateOf(0) }
+
+    val context = LocalContext.current
+    val firestore = FirebaseFirestore.getInstance()
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val coroutineScope = rememberCoroutineScope()
+    val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
+
+    // Fetch session requests
+    LaunchedEffect(Unit) {
+        try {
+            isLoading = true
+            currentUser?.let { user ->
+                firestore.collection("sessionRequests")
+                    .whereEqualTo("trainerId", user.uid)
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            Toast.makeText(context, "Error: ${error.message}", Toast.LENGTH_SHORT).show()
+                            return@addSnapshotListener
+                        }
+
+                        snapshot?.let {
+                            sessionRequests = it.documents.mapNotNull { doc ->
+                                TrainerSessionRequest(
+                                    id = doc.id,
+                                    studentId = doc.getString("studentId") ?: "",
+                                    trainerId = doc.getString("trainerId") ?: "",
+                                    trainerName = doc.getString("trainerName") ?: "",
+                                    studentName = doc.getString("studentName") ?: "",
+                                    date = doc.getDate("date"),
+                                    timeSlot = doc.getString("timeSlot") ?: "",
+                                    duration = doc.getLong("duration")?.toInt() ?: 0,
+                                    description = doc.getString("description") ?: "",
+                                    language = doc.getString("language") ?: "",
+                                    level = doc.getString("level") ?: "",
+                                    status = doc.getString("status") ?: "pending",
+                                    totalPrice = doc.getDouble("totalPrice") ?: 0.0,
+                                    roomId = doc.getString("roomId") ?: "",
+                                    createdAt = doc.getLong("createdAt") ?: 0L,
+                                    updatedAt = doc.getLong("updatedAt") ?: 0L
+                                )
+                            }.sortedByDescending { it.createdAt }
+                        }
+                        isLoading = false
+                    }
+            }
+        } catch (e: Exception) {
+            isLoading = false
+            Toast.makeText(context, "Failed to load sessions: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    val tabs = listOf("Pending", "Confirmed", "Completed", "Rejected")
+    val filteredSessions = remember(sessionRequests, selectedTab) {
+        when (selectedTab) {
+            0 -> sessionRequests.filter { it.status == "pending" }
+            1 -> sessionRequests.filter { it.status == "confirmed" }
+            2 -> sessionRequests.filter { it.status == "completed" }
+            3 -> sessionRequests.filter { it.status == "rejected" }
+            else -> sessionRequests
+        }
+    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background( brush = Brush.verticalGradient(
-                colors = listOf(
-                    Color(0xFFD4A574),
-                    Color(0xFFE6B87D)
-                )
-            ))
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Header
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background( brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFFD4A574),
-                            Color(0xFFE6B87D)
-                        )
-                    ))
-                    .padding(25.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "My Sessions",
-                        fontSize = 25.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF2D2D44)
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFD4A574),
+                        Color(0xFFE6B87D)
                     )
-
-                    Button(
-                        onClick = { /* Create new session */ },
-                        modifier = Modifier.height(40.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3D3D5C)
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 6.dp
-                        )
+                )
+            )
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Header
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color(0xFFD4A574),
+                shadowElevation = 4.dp
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarToday,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Create New Session",
-                            fontSize = 10.sp,
+                            text = "My Sessions",
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color(0xFF2D2D44)
                         )
+
+                        // Pending requests badge
+                        if (sessionRequests.count { it.status == "pending" } > 0) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFFEF4444)
+                            ) {
+                                Text(
+                                    text = "${sessionRequests.count { it.status == "pending" }}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Tabs
+                    ScrollableTabRow(
+                        selectedTabIndex = selectedTab,
+                        containerColor = Color.Transparent,
+                        contentColor = Color(0xFF2D2D44),
+                        edgePadding = 0.dp,
+                        indicator = { tabPositions ->
+                            if (selectedTab < tabPositions.size) {
+                                TabRowDefaults.SecondaryIndicator(
+                                    modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                                    color = Color(0xFF2D2D44),
+                                    height = 3.dp
+                                )
+                            }
+                        }
+                    ) {
+                        tabs.forEachIndexed { index, title ->
+                            Tab(
+                                selected = selectedTab == index,
+                                onClick = { selectedTab = index },
+                                text = {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = title,
+                                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
+                                        )
+
+                                        // Badge for pending count
+                                        if (index == 0 && sessionRequests.count { it.status == "pending" } > 0) {
+                                            Surface(
+                                                shape = CircleShape,
+                                                color = Color(0xFFEF4444)
+                                            ) {
+                                                Text(
+                                                    text = "${sessionRequests.count { it.status == "pending" }}",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = Color.White,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            )
+                        }
                     }
                 }
             }
 
-            // Sessions List
-            if (sessions.isEmpty()) {
-                EmptySessionsState()
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(sessions.size) { index ->
-                        SessionCard(session = sessions[index])
+            // Content
+            when {
+                isLoading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(48.dp)
+                        )
                     }
+                }
+                filteredSessions.isEmpty() -> {
+                    EmptyTrainerSessionsState(
+                        message = when (selectedTab) {
+                            0 -> "No pending requests"
+                            1 -> "No confirmed sessions"
+                            2 -> "No completed sessions"
+                            3 -> "No rejected requests"
+                            else -> "No sessions found"
+                        }
+                    )
+                }
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(24.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(filteredSessions) { session ->
+                            TrainerSessionCard(
+                                session = session,
+                                dateFormat = dateFormat,
+                                onConfirm = {
+                                    coroutineScope.launch {
+                                        try {
+                                            // Generate room ID
+                                            val roomId = "session-${UUID.randomUUID()}"
 
-                    item {
-                        Spacer(modifier = Modifier.height(20.dp))
+                                            // Update session status
+                                            firestore.collection("sessionRequests")
+                                                .document(session.id)
+                                                .update(
+                                                    mapOf(
+                                                        "status" to "confirmed",
+                                                        "roomId" to roomId,
+                                                        "updatedAt" to System.currentTimeMillis()
+                                                    )
+                                                )
+                                                .await()
+
+                                            Toast.makeText(
+                                                context,
+                                                "Session confirmed!",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(
+                                                context,
+                                                "Failed to confirm: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                },
+                                onReject = {
+                                    coroutineScope.launch {
+                                        try {
+                                            firestore.collection("sessionRequests")
+                                                .document(session.id)
+                                                .update(
+                                                    mapOf(
+                                                        "status" to "rejected",
+                                                        "updatedAt" to System.currentTimeMillis()
+                                                    )
+                                                )
+                                                .await()
+
+                                            Toast.makeText(
+                                                context,
+                                                "Request rejected",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(
+                                                context,
+                                                "Failed to reject: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                },
+                                onJoinSession = {
+                                    // Navigate to video call
+                                },
+                                onEndSession = {
+                                    coroutineScope.launch {
+                                        try {
+                                            firestore.collection("sessionRequests")
+                                                .document(session.id)
+                                                .update(
+                                                    mapOf(
+                                                        "status" to "completed",
+                                                        "updatedAt" to System.currentTimeMillis()
+                                                    )
+                                                )
+                                                .await()
+
+                                            Toast.makeText(
+                                                context,
+                                                "Session completed",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        } catch (e: Exception) {
+                                            Toast.makeText(
+                                                context,
+                                                "Failed to end session: ${e.message}",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+                                }
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
                     }
                 }
             }
@@ -164,205 +359,117 @@ fun TrainerSessionsScreen() {
     }
 }
 
-enum class SessionStatus {
-    COMPLETED,
-    ACTIVE,
-    SCHEDULED
-}
-
-data class SessionItem(
-    val title: String,
-    val studentCount: String,
-    val dateTime: String,
-    val description: String,
-    val duration: String,
-    val language: String,
-    val level: String,
-    val roomId: String,
-    val status: SessionStatus
-)
-
 @Composable
-fun SessionCard(session: SessionItem) {
+fun TrainerSessionCard(
+    session: TrainerSessionRequest,
+    dateFormat: SimpleDateFormat,
+    onConfirm: () -> Unit,
+    onReject: () -> Unit,
+    onJoinSession: () -> Unit,
+    onEndSession: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
-        )
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp)
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Row
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                // Left side - Session info
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.Top
                 ) {
-                    // Video icon
+                    // Student avatar
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .background(Color(0xFFB8E986), RoundedCornerShape(12.dp)),
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(Color(0xFF8B7FD8), Color(0xFFA893E8))
+                                ),
+                                shape = CircleShape
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Videocam,
+                            imageVector = Icons.Default.Person,
                             contentDescription = null,
-                            tint = Color(0xFF2D2D44),
+                            tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
                     }
 
-                    // Session details
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = session.title,
-                            fontSize = 20.sp,
+                            text = session.studentName,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2D2D44)
                         )
 
-                        Text(
-                            text = session.studentCount,
-                            fontSize = 14.sp,
-                            color = Color(0xFF6B7280)
-                        )
-
-                        Text(
-                            text = session.dateTime,
-                            fontSize = 14.sp,
-                            color = Color(0xFF6B7280)
-                        )
+                        session.date?.let {
+                            Text(
+                                text = "${dateFormat.format(it)} at ${session.timeSlot}",
+                                fontSize = 14.sp,
+                                color = Color(0xFF6B7280)
+                            )
+                        }
                     }
                 }
 
-                // Right side - Status and actions
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                // Status Badge
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = when (session.status) {
+                        "pending" -> Color(0xFFFEF3C7)
+                        "confirmed" -> Color(0xFFDBEAFE)
+                        "completed" -> Color(0xFFE5E7EB)
+                        "rejected" -> Color(0xFFFFE5E5)
+                        else -> Color(0xFFF3F4F6)
+                    }
                 ) {
-                    // Status badge
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
+                    Text(
+                        text = session.status.uppercase(),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
                         color = when (session.status) {
-                            SessionStatus.COMPLETED -> Color(0xFFE5E7EB)
-                            SessionStatus.ACTIVE -> Color(0xFFFEF3C7)
-                            SessionStatus.SCHEDULED -> Color(0xFFDBEAFE)
-                        }
-                    ) {
-                        Text(
-                            text = when (session.status) {
-                                SessionStatus.COMPLETED -> "COMPLETED"
-                                SessionStatus.ACTIVE -> "ACTIVE"
-                                SessionStatus.SCHEDULED -> "SCHEDULED"
-                            },
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = when (session.status) {
-                                SessionStatus.COMPLETED -> Color(0xFF374151)
-                                SessionStatus.ACTIVE -> Color(0xFF92400E)
-                                SessionStatus.SCHEDULED -> Color(0xFF1E40AF)
-                            },
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
-                        )
-                    }
-
-                    // Action buttons
-                    when (session.status) {
-                        SessionStatus.ACTIVE -> {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Button(
-                                    onClick = { /* Join session */ },
-                                    modifier = Modifier.height(30.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF3D3D5C)
-                                    ),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text(
-                                        text = "Join",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color(0xFFB8E986)
-                                    )
-                                }
-
-                                Button(
-                                    onClick = { /* End session */ },
-                                    modifier = Modifier.height(30.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF3D3D5C)
-                                    ),
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text(
-                                        text = "End",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                        }
-                        SessionStatus.SCHEDULED -> {
-                            Button(
-                                onClick = { /* Start session */ },
-                                modifier = Modifier.height(30.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF3D3D5C)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "Start",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color.White
-                                )
-                            }
-                        }
-                        else -> {}
-                    }
+                            "pending" -> Color(0xFF92400E)
+                            "confirmed" -> Color(0xFF1E40AF)
+                            "completed" -> Color(0xFF374151)
+                            "rejected" -> Color(0xFFEF4444)
+                            else -> Color(0xFF6B7280)
+                        },
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    )
                 }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Description
             Text(
                 text = session.description,
-                fontSize = 15.sp,
+                fontSize = 14.sp,
                 color = Color(0xFF4B5563),
-                lineHeight = 22.sp
+                lineHeight = 20.sp
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Session details row
-            Column(
+            // Session Details
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                // Duration
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -372,53 +479,191 @@ fun SessionCard(session: SessionItem) {
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "Duration: ${session.duration}",
+                        text = "${session.duration}m",
                         fontSize = 13.sp,
                         color = Color(0xFF6B7280)
                     )
                 }
 
-                Text(
-                    text = "•",
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280)
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = Color(0xFF6B7280),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = session.language,
+                        fontSize = 13.sp,
+                        color = Color(0xFF6B7280)
+                    )
+                }
 
-                // Language
-                Text(
-                    text = "Language: ${session.language}",
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280)
-                )
-
-                Text(
-                    text = "•",
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280)
-                )
-
-                // Level
-                Text(
-                    text = "Level: ${session.level}",
-                    fontSize = 13.sp,
-                    color = Color(0xFF6B7280)
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.TrendingUp,
+                        contentDescription = null,
+                        tint = Color(0xFF6B7280),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = session.level.capitalize(Locale.ROOT),
+                        fontSize = 13.sp,
+                        color = Color(0xFF6B7280)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Earnings
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFB8E986).copy(alpha = 0.2f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "You'll Earn",
+                        fontSize = 14.sp,
+                        color = Color(0xFF6B7280)
+                    )
+                    Text(
+                        text = "$${session.totalPrice.toInt()}",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2D2D44)
+                    )
+                }
+            }
+
+            // Action Buttons
+            when (session.status) {
+                "pending" -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onReject,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFFEF4444)),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Reject",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFEF4444)
+                            )
+                        }
+
+                        Button(
+                            onClick = onConfirm,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFB8E986)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "Confirm",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2D2D44)
+                            )
+                        }
+                    }
+                }
+                "confirmed" -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = onJoinSession,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF3D3D5C)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Videocam,
+                                contentDescription = null,
+                                tint = Color(0xFFB8E986),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Join",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+
+                        Button(
+                            onClick = onEndSession,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFEF4444)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "End Session",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
 
             // Room ID
-            Text(
-                text = "Room: ${session.roomId}",
-                fontSize = 13.sp,
-                color = Color(0xFF6B7280)
-            )
+            if (session.status == "confirmed" && session.roomId.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = Color(0xFFDBEAFE).copy(alpha = 0.5f)
+                ) {
+                    Text(
+                        text = "Room ID: ${session.roomId}",
+                        fontSize = 12.sp,
+                        color = Color(0xFF1E40AF),
+                        modifier = Modifier.padding(12.dp)
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-fun EmptySessionsState() {
+fun EmptyTrainerSessionsState(message: String) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -431,28 +676,28 @@ fun EmptySessionsState() {
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(Color(0xFFE5E7EB), CircleShape),
+                    .background(Color.White.copy(alpha = 0.3f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.CalendarToday,
                     contentDescription = null,
-                    tint = Color(0xFF6B7280),
+                    tint = Color.White,
                     modifier = Modifier.size(50.dp)
                 )
             }
 
             Text(
-                text = "No Sessions Yet",
-                fontSize = 28.sp,
+                text = "No Sessions",
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF2D2D44)
+                color = Color.White
             )
 
             Text(
-                text = "Create your first session to start teaching!",
+                text = message,
                 fontSize = 16.sp,
-                color = Color(0xFF6B7280),
+                color = Color.White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center
             )
         }

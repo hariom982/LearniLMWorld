@@ -43,10 +43,11 @@ import androidx.compose.ui.unit.sp
 import com.example.learnilmworld.screen.ActionCard
 import com.example.learnilmworld.screen.ServiceCard
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.navigation.NavController
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun StudentHomeScreen() {
+fun StudentHomeScreen(navController: NavController) {
     val services = listOf(
         ServiceCard(
             icon = "📖",
@@ -81,7 +82,8 @@ fun StudentHomeScreen() {
             title = "Find Your Perfect Trainer",
             description = "Browse through our network of expert trainers and counselors to find the perfect match for your learning goals.",
             buttonText = "Browse All Trainers",
-            buttonColor = Color(0xFF10B981)
+            buttonColor = Color(0xFF10B981),
+            destination = "browse_trainers"
         ),
         ActionCard(
             icon = "💬",
@@ -89,7 +91,8 @@ fun StudentHomeScreen() {
             title = "Your Learning Journey",
             description = "Keep track of your sessions, view feedback from trainers, and monitor your progress.",
             buttonText = "View My Sessions",
-            buttonColor = Color(0xFF3B82F6)
+            buttonColor = Color(0xFF3B82F6),
+            destination = "view_sessions"
         )
     )
 
@@ -138,7 +141,7 @@ fun StudentHomeScreen() {
 
             // Action Cards
             items(actionCards) { actionCard ->
-                ActionCardItem(actionCard = actionCard)
+                ActionCardItem(actionCard = actionCard, navController = navController)
             }
 
         }
@@ -216,7 +219,7 @@ fun ServiceCardItem(service: ServiceCard) {
 }
 
 @Composable
-fun ActionCardItem(actionCard: ActionCard) {
+fun ActionCardItem(actionCard: ActionCard, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -271,7 +274,9 @@ fun ActionCardItem(actionCard: ActionCard) {
 
             // Button
             Button(
-                onClick = { /* Handle action */ },
+                onClick = {
+                    navController.navigate(actionCard.destination)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.learnilmworld.screen.Screen
+import com.example.learnilmworld.student.BrowseTrainersScreen
 import com.example.learnilmworld.student.StudentMainScreen
 import com.example.learnilmworld.student.StudentSignupScreen
 import com.example.learnilmworld.trainer.TrainerMainScreen
@@ -79,6 +80,9 @@ class MainActivity : ComponentActivity() {
             }
             composable(Screen.TrainerSignup.route) {
                 TrainerSignupScreen(navController,viewModel)
+            }
+            composable("browse_trainers"){
+                BrowseTrainersScreen(navController)
             }
         }
     }

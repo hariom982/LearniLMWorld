@@ -29,5 +29,6 @@ data class ActionCard(
     val title: String,
     val description: String,
     val buttonText: String,
-    val buttonColor: Color
+    val buttonColor: Color,
+    val destination: String
 )
