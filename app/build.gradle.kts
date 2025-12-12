@@ -71,6 +71,11 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
+    //Jitsi meet sdk
+    implementation("org.jitsi.react:jitsi-meet-sdk:8.1.2") {
+        isTransitive = true
+    }
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

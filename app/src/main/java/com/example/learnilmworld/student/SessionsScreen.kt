@@ -21,14 +21,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.learnilmworld.models.SessionRequest
+import androidx.compose.ui.window.Dialog
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import java.text.SimpleDateFormat
 import java.util.*
 
-
+data class SessionRequest(
+    val id: String = "",
+    val studentId: String = "",
+    val trainerId: String = "",
+    val trainerName: String = "",
+    val studentName: String = "",
+    val date: Date? = null,
+    val timeSlot: String = "",
+    val duration: Int = 0,
+    val description: String = "",
+    val language: String = "",
+    val level: String = "",
+    val status: String = "pending", // pending, confirmed, rejected, completed
+    val totalPrice: Double = 0.0,
+    val roomId: String = "",
+    val roomName: String = "",
+    val meetingLink: String = "",
+    val meetingType: String = "",
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +88,9 @@ fun SessionsScreen() {
                         status = doc.getString("status") ?: "pending",
                         totalPrice = doc.getDouble("totalPrice") ?: 0.0,
                         roomId = doc.getString("roomId") ?: "",
+                        roomName = doc.getString("roomName") ?: "",
+                        meetingLink = doc.getString("meetingLink") ?: "",
+                        meetingType = doc.getString("meetingType") ?: "",
                         createdAt = doc.getLong("createdAt") ?: 0L,
                         updatedAt = doc.getLong("updatedAt") ?: 0L
                     )
@@ -212,6 +235,44 @@ fun StudentSessionCard(
     dateFormat: SimpleDateFormat,
     onJoinSession: () -> Unit
 ) {
+    val context = LocalContext.current
+    var showMeetingLinkDialog by remember { mutableStateOf(false) }
+
+    if (showMeetingLinkDialog && session.meetingLink.isNotEmpty()) {
+        MeetingLinkDialogStudent(
+            meetingLink = session.meetingLink,
+            roomName = session.roomName,
+            sessionTitle = "Session with ${session.trainerName}",
+            userName = session.studentName,
+            onDismiss = { showMeetingLinkDialog = false },
+            onJoin = {
+                // Launch native Jitsi Meet
+                if (session.roomName.isNotEmpty()) {
+                    com.example.learnilmworld.meeting.JitsiMeetingActivity.startMeeting(
+                        context = context,
+                        roomName = session.roomName,
+                        userName = session.studentName,
+                        meetingLink = session.meetingLink
+                    )
+                } else {
+                    Toast.makeText(context, "Meeting room not found", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onCopy = {
+                com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
+                    context = context,
+                    meetingLink = session.meetingLink
+                )
+            },
+            onShare = {
+                com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
+                    context = context,
+                    meetingLink = session.meetingLink,
+                    sessionTitle = "Session with ${session.trainerName}"
+                )
+            }
+        )
+    }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -373,7 +434,13 @@ fun StudentSessionCard(
             when (session.status) {
                 "confirmed" -> {
                     Button(
-                        onClick = onJoinSession,
+                        onClick = {
+                            if (session.meetingLink.isNotEmpty()) {
+                                showMeetingLinkDialog = true
+                            } else {
+                                Toast.makeText(context, "Meeting link not available", Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
@@ -422,18 +489,85 @@ fun StudentSessionCard(
             }
 
             // Room ID for confirmed sessions
-            if (session.status == "confirmed" && session.roomId.isNotEmpty()) {
-                Surface(
+            if (session.status == "confirmed") {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFDBEAFE).copy(alpha = 0.5f)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "Room ID: ${session.roomId}",
-                        fontSize = 12.sp,
-                        color = Color(0xFF1E40AF),
-                        modifier = Modifier.padding(12.dp)
-                    )
+                    if (session.roomId.isNotEmpty()) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFDBEAFE).copy(alpha = 0.5f)
+                        ) {
+                            Text(
+                                text = "Room ID: ${session.roomId}",
+                                fontSize = 12.sp,
+                                color = Color(0xFF1E40AF),
+                                modifier = Modifier.padding(12.dp)
+                            )
+                        }
+                    }
+
+                    if (session.meetingLink.isNotEmpty()) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFB8E986).copy(alpha = 0.3f)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Meeting Link Ready",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFF2D2D44)
+                                )
+
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    IconButton(
+                                        onClick = {
+                                            com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
+                                                context = context,
+                                                meetingLink = session.meetingLink
+                                            )
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ContentCopy,
+                                            contentDescription = "Copy",
+                                            tint = Color(0xFF2D2D44),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+
+                                    IconButton(
+                                        onClick = {
+                                            com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
+                                                context = context,
+                                                meetingLink = session.meetingLink,
+                                                sessionTitle = "Session with ${session.trainerName}"
+                                            )
+                                        },
+                                        modifier = Modifier.size(32.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Share,
+                                            contentDescription = "Share",
+                                            tint = Color(0xFF2D2D44),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -478,6 +612,207 @@ fun EmptySessionsState(message: String) {
                 color = Color.White.copy(alpha = 0.9f),
                 textAlign = TextAlign.Center
             )
+        }
+    }
+}
+
+@Composable
+fun MeetingLinkDialogStudent(
+    meetingLink: String,
+    roomName: String,
+    sessionTitle: String,
+    userName: String,
+    onDismiss: () -> Unit,
+    onJoin: () -> Unit,
+    onCopy: () -> Unit,
+    onShare: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Join Meeting",
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2D2D44)
+                    )
+
+                    IconButton(onClick = onDismiss) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Close",
+                            tint = Color(0xFF6B7280)
+                        )
+                    }
+                }
+
+                // Meeting icon
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(Color(0xFF3D3D5C), Color(0xFF2D2D44))
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Videocam,
+                            contentDescription = null,
+                            tint = Color(0xFFB8E986),
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
+                }
+
+                Text(
+                    text = sessionTitle,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF6B7280),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                // Meeting link display
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFF3F4F6)
+                ) {
+                    Text(
+                        text = meetingLink,
+                        fontSize = 13.sp,
+                        color = Color(0xFF2D2D44),
+                        modifier = Modifier.padding(16.dp),
+                        lineHeight = 20.sp
+                    )
+                }
+
+                // Action buttons
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Join button
+                    Button(
+                        onClick = {
+                            onJoin()
+                            onDismiss()
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFB8E986)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Videocam,
+                            contentDescription = null,
+                            tint = Color(0xFF2D2D44),
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Join Now",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2D2D44)
+                        )
+                    }
+
+                    // Secondary actions
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                onCopy()
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.5.dp,
+                                Color(0xFFE5E7EB)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = null,
+                                tint = Color(0xFF6B7280),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Copy",
+                                fontSize = 14.sp,
+                                color = Color(0xFF2D2D44)
+                            )
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                onShare()
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color.Transparent
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.5.dp,
+                                Color(0xFFE5E7EB)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Share,
+                                contentDescription = null,
+                                tint = Color(0xFF6B7280),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Share",
+                                fontSize = 14.sp,
+                                color = Color(0xFF2D2D44)
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
