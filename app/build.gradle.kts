@@ -75,7 +75,7 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
-    // ZegoCloud Video Call SDK - One-line integration!
+    // ZegoCloud Video Call SDK
     implementation("com.github.ZEGOCLOUD:zego_uikit_prebuilt_call_android:+")
 
 
