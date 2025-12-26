@@ -3,6 +3,7 @@ package com.example.learnilmworld.trainer
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -276,12 +277,12 @@ fun TrainerSessionsScreen() {
                                                 val trainerName = trainerDoc.getString("fullName") ?: "Trainer"
 
                                                 // Create meeting session with Jitsi
-                                                val meetingDetails = com.example.learnilmworld.utils.JitsiMeetingManager
-                                                    .createMeetingSession(
-                                                        sessionRequestId = session.id,
-                                                        trainerName = trainerName,
-                                                        studentName = session.studentName
-                                                    )
+                                                com.example.learnilmworld.VideoCallActivity.startMeeting(
+                                                    context = context,
+                                                    callID = session.id,           // Use your sessionRequest.id as the unique call/room ID
+                                                    userID = session.trainerId,      // Or trainerId/studentId depending on who is joining
+                                                    userName = session.trainerName     // trainerName or studentName
+                                                )
 
                                                 // Update session with room details
                                                 firestore.collection("sessionRequests")
@@ -289,9 +290,6 @@ fun TrainerSessionsScreen() {
                                                     .update(
                                                         mapOf(
                                                             "status" to "confirmed",
-                                                            "roomId" to meetingDetails.roomName,
-                                                            "roomName" to meetingDetails.roomName,
-                                                            "meetingLink" to meetingDetails.meetingLink,
                                                             "meetingType" to "JITSI",
                                                             "updatedAt" to System.currentTimeMillis()
                                                         )
@@ -392,9 +390,9 @@ fun TrainerSessionCard(
     onJoinSession: () -> Unit,
     onEndSession: () -> Unit
 ) {
+    val currentUser = FirebaseAuth.getInstance().currentUser
     val context = LocalContext.current
     var showMeetingLinkDialog by remember { mutableStateOf(false) }
-
     if (showMeetingLinkDialog && session.meetingLink.isNotEmpty()) {
         MeetingLinkDialog(
             meetingLink = session.meetingLink,
@@ -403,31 +401,30 @@ fun TrainerSessionCard(
             userName = session.trainerName,
             onDismiss = { showMeetingLinkDialog = false },
             onJoin = {
-                // Launch native Jitsi Meet
                 if (session.roomName.isNotEmpty()) {
-                    com.example.learnilmworld.meeting.JitsiMeetingActivity.startMeeting(
+                    com.example.learnilmworld.VideoCallActivity.startMeeting(
                         context = context,
-                        roomName = session.roomName,
-                        userName = session.trainerName,
-                        meetingLink = session.meetingLink
+                        callID = session.id,           // Use your sessionRequest.id as the unique call/room ID
+                        userID = session.trainerId,      // Or trainerId/studentId depending on who is joining
+                        userName = session.trainerName   // trainerName or studentName
                     )
                 } else {
                     Toast.makeText(context, "Meeting room not found", Toast.LENGTH_SHORT).show()
                 }
             },
-            onCopy = {
-                com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
-                    context = context,
-                    meetingLink = session.meetingLink
-                )
-            },
-            onShare = {
-                com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
-                    context = context,
-                    meetingLink = session.meetingLink,
-                    sessionTitle = "Session with ${session.studentName}"
-                )
-            }
+//            onCopy = {
+//                com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
+//                    context = context,
+//                    meetingLink = session.meetingLink
+//                )
+//            },
+//            onShare = {
+//                com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
+//                    context = context,
+//                    meetingLink = session.meetingLink,
+//                    sessionTitle = "Session with ${session.studentName}"
+//                )
+//            }
         )
     }
     Card(
@@ -443,10 +440,10 @@ fun TrainerSessionCard(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
-            Row(
+            Column(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalArrangement = Arrangement.SpaceEvenly,
+                horizontalAlignment = Alignment.Start
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -499,7 +496,8 @@ fun TrainerSessionCard(
                         "completed" -> Color(0xFFE5E7EB)
                         "rejected" -> Color(0xFFFFE5E5)
                         else -> Color(0xFFF3F4F6)
-                    }
+                    },
+                    modifier = Modifier.padding(top = 4.dp)
                 ) {
                     Text(
                         text = session.status.uppercase(),
@@ -661,11 +659,12 @@ fun TrainerSessionCard(
                     ) {
                         Button(
                             onClick = {
-                                if (session.meetingLink.isNotEmpty()) {
-                                    showMeetingLinkDialog = true
-                                } else {
-                                    Toast.makeText(context, "Meeting link not available", Toast.LENGTH_SHORT).show()
-                                }
+                                com.example.learnilmworld.VideoCallActivity.startMeeting(  // or VideoCallActivity if you renamed it
+                                    context = context,
+                                    callID = session.id,
+                                    userID = session.trainerId,
+                                    userName = session.trainerName  // or fetch from Firestore if needed
+                                )
                             },
                             modifier = Modifier
                                 .weight(1f)
@@ -755,10 +754,10 @@ fun TrainerSessionCard(
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     IconButton(
                                         onClick = {
-                                            com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
-                                                context = context,
-                                                meetingLink = session.meetingLink
-                                            )
+//                                            com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
+//                                                context = context,
+//                                                meetingLink = session.meetingLink
+//                                            )
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {
@@ -772,11 +771,11 @@ fun TrainerSessionCard(
 
                                     IconButton(
                                         onClick = {
-                                            com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
-                                                context = context,
-                                                meetingLink = session.meetingLink,
-                                                sessionTitle = "Session with ${session.studentName}"
-                                            )
+//                                            com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
+//                                                context = context,
+//                                                meetingLink = session.meetingLink,
+//                                                sessionTitle = "Session with ${session.studentName}"
+//                                            )
                                         },
                                         modifier = Modifier.size(32.dp)
                                     ) {
@@ -847,8 +846,8 @@ fun MeetingLinkDialog(
     userName: String,
     onDismiss: () -> Unit,
     onJoin: () -> Unit,
-    onCopy: () -> Unit,
-    onShare: () -> Unit
+//    onCopy: () -> Unit,
+//    onShare: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -970,70 +969,70 @@ fun MeetingLinkDialog(
                     }
 
                     // Secondary actions
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                onCopy()
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.Transparent
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                Color(0xFFE5E7EB)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ContentCopy,
-                                contentDescription = null,
-                                tint = Color(0xFF6B7280),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Copy",
-                                fontSize = 14.sp,
-                                color = Color(0xFF2D2D44)
-                            )
-                        }
-
-                        OutlinedButton(
-                            onClick = {
-                                onShare()
-                            },
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(48.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color.Transparent
-                            ),
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.5.dp,
-                                Color(0xFFE5E7EB)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Share,
-                                contentDescription = null,
-                                tint = Color(0xFF6B7280),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Share",
-                                fontSize = 14.sp,
-                                color = Color(0xFF2D2D44)
-                            )
-                        }
-                    }
+//                    Row(
+//                        modifier = Modifier.fillMaxWidth(),
+//                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+//                    ) {
+//                        OutlinedButton(
+//                            onClick = {
+//                                onCopy()
+//                            },
+//                            modifier = Modifier
+//                                .weight(1f)
+//                                .height(48.dp),
+//                            colors = ButtonDefaults.outlinedButtonColors(
+//                                containerColor = Color.Transparent
+//                            ),
+//                            border = androidx.compose.foundation.BorderStroke(
+//                                1.5.dp,
+//                                Color(0xFFE5E7EB)
+//                            ),
+//                            shape = RoundedCornerShape(12.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.ContentCopy,
+//                                contentDescription = null,
+//                                tint = Color(0xFF6B7280),
+//                                modifier = Modifier.size(20.dp)
+//                            )
+//                            Spacer(modifier = Modifier.width(8.dp))
+//                            Text(
+//                                text = "Copy",
+//                                fontSize = 14.sp,
+//                                color = Color(0xFF2D2D44)
+//                            )
+//                        }
+//
+//                        OutlinedButton(
+//                            onClick = {
+//                                onShare()
+//                            },
+//                            modifier = Modifier
+//                                .weight(1f)
+//                                .height(48.dp),
+//                            colors = ButtonDefaults.outlinedButtonColors(
+//                                containerColor = Color.Transparent
+//                            ),
+//                            border = androidx.compose.foundation.BorderStroke(
+//                                1.5.dp,
+//                                Color(0xFFE5E7EB)
+//                            ),
+//                            shape = RoundedCornerShape(12.dp)
+//                        ) {
+//                            Icon(
+//                                imageVector = Icons.Default.Share,
+//                                contentDescription = null,
+//                                tint = Color(0xFF6B7280),
+//                                modifier = Modifier.size(20.dp)
+//                            )
+//                            Spacer(modifier = Modifier.width(8.dp))
+//                            Text(
+//                                text = "Share",
+//                                fontSize = 14.sp,
+//                                color = Color(0xFF2D2D44)
+//                            )
+//                        }
+//                    }
                 }
             }
         }

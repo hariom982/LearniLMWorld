@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.learnilmworld"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -56,6 +56,10 @@ dependencies {
     implementation(libs.googleid)
     implementation(libs.firebase.database)
     implementation(libs.firebase.firestore)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.constraintlayout)
     debugImplementation ("androidx.compose.ui:ui-tooling:1.9.4")
 
     //Pager
@@ -71,10 +75,9 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
-    //Jitsi meet sdk
-    implementation("org.jitsi.react:jitsi-meet-sdk:8.1.2") {
-        isTransitive = true
-    }
+    // ZegoCloud Video Call SDK - One-line integration!
+    implementation("com.github.ZEGOCLOUD:zego_uikit_prebuilt_call_android:+")
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

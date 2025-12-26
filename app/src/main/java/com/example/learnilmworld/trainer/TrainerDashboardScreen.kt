@@ -25,12 +25,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import com.example.learnilmworld.R
+import com.example.learnilmworld.screen.TrainerScreen
 import com.example.learnilmworld.screen.TrainerStatsCard
 import com.example.learnilmworld.viewModel.AuthViewModel
 
 @Composable
-fun TrainerDashboardScreen(viewModel: AuthViewModel) {
+fun TrainerDashboardScreen(viewModel: AuthViewModel,navController: NavHostController) {
     val currentUser by viewModel.currentUser.collectAsState()
 
     val statsCards = listOf(
@@ -117,7 +120,7 @@ fun TrainerDashboardScreen(viewModel: AuthViewModel) {
 
             // Recent Bookings Section
             item {
-                RecentBookingsSection()
+                RecentBookingsSection(navController)
             }
 
             // Bottom spacing
@@ -224,7 +227,7 @@ fun TrainerStatsCardItem(stats: TrainerStatsCard) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RecentBookingsSection() {
+fun RecentBookingsSection(navController: NavHostController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -298,7 +301,7 @@ fun RecentBookingsSection() {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Button(
-                    onClick = { /* Navigate to sessions */ },
+                    onClick = { navController.navigate(TrainerScreen.Sessions.route)},
                     modifier = Modifier
                         .padding(horizontal = 32.dp)
                         .height(52.dp),

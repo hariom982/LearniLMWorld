@@ -37,7 +37,7 @@ fun TrainerProfileScreen(viewModel: AuthViewModel,
     var hourlyRate by remember { mutableStateOf("25") }
     var teachingStyle by remember { mutableStateOf("Conversational") }
     var isAvailableForBookings by remember { mutableStateOf(true) }
-    var languages by remember { mutableStateOf(listOf("english", "hindi")) }
+    var languages by remember { mutableStateOf<List<String>>(emptyList()) }
     var newLanguage by remember { mutableStateOf("") }
     var specializations by remember { mutableStateOf(listOf("maths", "english")) }
     var newSpecialization by remember { mutableStateOf("") }
@@ -57,13 +57,15 @@ fun TrainerProfileScreen(viewModel: AuthViewModel,
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             // Set your state variables with user data
-            fullName = user.fullName
+            fullName = user.fullName + user.lastName
             email = user.email
             phoneNumber = user.phoneNumber
             nationality = user.nationality
             location = user.location
             bio = user.bio
-            
+            languages = user.languagesToLearn
+            specializations = user.specializations
+            yearsOfExperience = user.yearsOfExperience.toString()
 
         }
     }

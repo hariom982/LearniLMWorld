@@ -21,6 +21,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import com.example.learnilmworld.viewModel.AuthViewModel
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,6 +41,24 @@ data class OnboardingPage(
 fun OnboardingScreen(onFinish: () -> Unit) {
     val pagerState = rememberPagerState()
     val scope = rememberCoroutineScope()
+    val viewModel: AuthViewModel = viewModel()
+    val navController = rememberNavController()
+    val authState by viewModel.authState.collectAsState()
+//    val currentUser by viewModel.currentUser.collectAsState()
+//    // Auto-navigate on app start if user is logged in
+//
+//        LaunchedEffect(currentUser) {
+//            currentUser?.let { user ->
+//                val route = if (user.userType == "STUDENT") {
+//                    "student_home"
+//                } else {
+//                    "trainer_home"
+//                }
+//                navController.navigate(route) {
+//                    popUpTo(0) { inclusive = true }
+//                }
+//            }
+//        }
 
     val pages = listOf(
         OnboardingPage(
@@ -87,7 +108,7 @@ fun OnboardingScreen(onFinish: () -> Unit) {
 
         // Skip button
 //        TextButton(
-//            onClick = onFinish,
+//            onClick = {navController.navigate("choicescreen")},
 //            modifier = Modifier
 //                .align(Alignment.TopEnd)
 //                .padding(top = 40.dp, end = 24.dp)

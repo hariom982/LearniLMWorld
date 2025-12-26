@@ -37,18 +37,18 @@ class MainActivity : ComponentActivity() {
         val currentUser by viewModel.currentUser.collectAsState()
         // Auto-navigate on app start if user is logged in
 
-//        LaunchedEffect(currentUser) {
-//            currentUser?.let { user ->
-//                val route = if (user.userType == "STUDENT") {
-//                    "student_home"
-//                } else {
-//                    "trainer_home"
-//                }
-//                navController.navigate(route) {
-//                    popUpTo(0) { inclusive = true }
-//                }
-//            }
-//        }
+        LaunchedEffect(currentUser) {
+            currentUser?.let { user ->
+                val route = if (user.userType == "STUDENT") {
+                    "student_home"
+                } else {
+                    "trainer_home"
+                }
+                navController.navigate(route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            }
+        }
 
         NavHost(
             navController = navController,

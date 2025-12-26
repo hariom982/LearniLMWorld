@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,103 +52,128 @@ fun choiceScreen(navController: NavHostController) {
         // Animated floating shapes in background
         FloatingShapes()
 
-        Column(
+        LazyColumn (
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             // Logo with pulse animation
-            AnimatedLogo()
+            item{
+                AnimatedLogo()
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            item{
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // App Title
-            Text(
-                text = "LearniLMWorld",
-                fontSize = 48.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White,
-                letterSpacing = (-1).sp,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            item{
+                Text(
+                    text = "LearniLMWorld",
+                    fontSize = 40.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    letterSpacing = (-1).sp,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+            }
 
-            Text(
-                text = "Master Languages Together",
-                fontSize = 17.sp,
-                color = Color.White.copy(alpha = 0.95f),
-                fontWeight = FontWeight.Normal,
-                modifier = Modifier.padding(bottom = 48.dp)
-            )
+            item{
+                Text(
+                    text = "Master Languages Together",
+                    fontSize = 17.sp,
+                    color = Color.White.copy(alpha = 0.95f),
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(bottom = 48.dp)
+                )
+            }
 
             // Sign Up Prompt
-            Text(
-                text = "Choose Your Journey",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = Color.White.copy(alpha = 0.95f),
-                modifier = Modifier.padding(bottom = 28.dp)
-            )
+            item{
+                Text(
+                    text = "Choose Your Journey",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.95f),
+                    modifier = Modifier.padding(bottom = 28.dp)
+                )
+            }
+
 
             // Student Option
-            GlassmorphicUserCard(
-                userType = UserType.STUDENT,
-                icon = Icons.Default.School,
-                title = "I'm a Student",
-                description = "Start your journey",
-                isSelected = selectedUserType == UserType.STUDENT,
-                onClick = { selectedUserType = UserType.STUDENT }
-            )
+            item{
+                GlassmorphicUserCard(
+                    userType = UserType.STUDENT,
+                    icon = Icons.Default.School,
+                    title = "I'm a Student",
+                    description = "Start your journey",
+                    isSelected = selectedUserType == UserType.STUDENT,
+                    onClick = { selectedUserType = UserType.STUDENT }
+                )
+            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            item{
+                Spacer(modifier = Modifier.height(20.dp))
+            }
 
             // Trainer Option
-            GlassmorphicUserCard(
-                userType = UserType.TRAINER,
-                icon = Icons.Default.Person,
-                title = "I'm a Trainer",
-                description = "Be a teacher",
-                isSelected = selectedUserType == UserType.TRAINER,
-                onClick = { selectedUserType = UserType.TRAINER }
-            )
+            item{
+                GlassmorphicUserCard(
+                    userType = UserType.TRAINER,
+                    icon = Icons.Default.Person,
+                    title = "I'm a Trainer",
+                    description = "Be a teacher",
+                    isSelected = selectedUserType == UserType.TRAINER,
+                    onClick = { selectedUserType = UserType.TRAINER }
+                )
+            }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            item{
+                Spacer(modifier = Modifier.height(36.dp))
+            }
 
             // Continue Button with shimmer effect
-            ContinueButton(
-                enabled = selectedUserType != null,
-                onClick = {
-                    when (selectedUserType) {
-                        UserType.STUDENT -> navController.navigate(Screen.StudentSignup.route)
-                        UserType.TRAINER -> navController.navigate(Screen.TrainerSignup.route)
-                        null -> {}
+            item{
+                ContinueButton(
+                    enabled = selectedUserType != null,
+                    onClick = {
+                        when (selectedUserType) {
+                            UserType.STUDENT -> navController.navigate(Screen.StudentSignup.route)
+                            UserType.TRAINER -> navController.navigate(Screen.TrainerSignup.route)
+                            null -> {}
+                        }
                     }
+                )
+            }
+
+            item{
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+
+            item{
+                // Sign In Link
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Already have an account? ",
+                        color = Color.White,
+                        fontSize = 15.sp
+                    )
+                    Text(
+                        text = "Sign In",
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        textDecoration = TextDecoration.Underline,
+                        modifier = Modifier.clickable {
+                            navController.navigate("signin")
+                        }
+                    )
                 }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Sign In Link
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Already have an account? ",
-                    color = Color.White,
-                    fontSize = 15.sp
-                )
-                Text(
-                    text = "Sign In",
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable {
-                        navController.navigate("signin")
-                    }
-                )
             }
         }
     }
@@ -274,7 +300,7 @@ fun GlassmorphicUserCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp)
+            .height(150.dp)
             .scale(animatedScale)
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),

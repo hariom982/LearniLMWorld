@@ -72,7 +72,6 @@ fun StudentBottomNavigationBar(navController: NavHostController) {
     NavigationBar(
         containerColor = Color(0xFF2D2D44),
         contentColor = Color.White,
-        modifier = Modifier.height(70.dp)
     ) {
         items.forEach { screen ->
             val isSelected = currentRoute == screen.route

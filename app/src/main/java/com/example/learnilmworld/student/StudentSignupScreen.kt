@@ -82,22 +82,22 @@ fun StudentSignupScreen(navController: NavHostController,
 
     val isLoading = authState is AuthState.Loading
 
-    LaunchedEffect(authState) {
-        when (val state = authState) {
-            is AuthState.Success -> {
-                Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
-                navController.navigate("student_home") {
-                    popUpTo("student_signup") { inclusive = true }
-                }
-                viewModel.resetState()
-            }
-            is AuthState.Error -> {
-                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
-                viewModel.resetState()
-            }
-            else -> {}
-        }
-    }
+//    LaunchedEffect(authState) {
+//        when (val state = authState) {
+//            is AuthState.Success -> {
+//                Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
+//                navController.navigate("student_home") {
+//                    popUpTo("student_signup") { inclusive = true }
+//                }
+//                viewModel.resetState()
+//            }
+//            is AuthState.Error -> {
+//                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+//                viewModel.resetState()
+//            }
+//            else -> {}
+//        }
+//    }
 
     fun validateFields(): Boolean {
         firstNameError = firstName.isBlank()

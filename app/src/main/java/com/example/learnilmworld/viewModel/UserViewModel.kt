@@ -125,7 +125,7 @@ class AuthViewModel : ViewModel() {
                 yearsOfExperience = yearsOfExperience,
                 hourlyRate = hourlyRate,
                 teachingStyle = teachingStyle,
-                languagesToTeach = languagesToTeach,
+                languagesToTeach = languagesToTeach.toList(),
                 specializations = specializations,
                 certification = certification,
                 nationality = nationality

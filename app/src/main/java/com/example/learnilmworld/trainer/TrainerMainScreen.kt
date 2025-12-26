@@ -41,7 +41,7 @@ fun TrainerMainScreen(viewModel: AuthViewModel,
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(TrainerScreen.Dashboard.route) {
-                TrainerDashboardScreen(viewModel)
+                TrainerDashboardScreen(viewModel,bottomNavController)
             }
             composable(TrainerScreen.Sessions.route) {
                 TrainerSessionsScreen()
@@ -75,7 +75,6 @@ fun TrainerBottomNavigationBar(navController: NavHostController) {
     NavigationBar(
         containerColor = Color(0xFF2D2D44),
         contentColor = Color.White,
-        modifier = Modifier.height(70.dp)
     ) {
         items.forEach { screen ->
             val isSelected = currentRoute == screen.route
@@ -85,7 +84,7 @@ fun TrainerBottomNavigationBar(navController: NavHostController) {
                     Icon(
                         imageVector = screen.icon,
                         contentDescription = screen.title,
-                        modifier = Modifier.size(20.dp).padding(top = 2.dp)
+                        modifier = Modifier.size(20.dp).padding(top = 1.dp)
                     )
                 },
                 label = {
