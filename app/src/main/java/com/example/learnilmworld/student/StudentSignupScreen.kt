@@ -210,6 +210,13 @@ fun StudentSignupScreen(navController: NavHostController,
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            Text(
+                text = "Password",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
             // Password field with eye icon
             OutlinedTextField(
                 value = password,
@@ -217,7 +224,7 @@ fun StudentSignupScreen(navController: NavHostController,
                     password = it
                     passwordError = false
                 },
-                label = { Text("Password") },
+//                label = { Text("Password") },
                 placeholder = { Text("Enter password") },
                 visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -225,25 +232,24 @@ fun StudentSignupScreen(navController: NavHostController,
                         Icon(
                             imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                            tint = Color(0xFF667eea)
+                            tint = Color.Black
                         )
                     }
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White.copy(alpha = 0.95f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
-                    focusedTextColor = Color(0xFF667eea),
-                    unfocusedTextColor = Color(0xFF667eea),
-                    focusedLabelColor = Color(0xFF667eea),
-                    unfocusedLabelColor = Color(0xFF667eea).copy(alpha = 0.7f),
-                    focusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
-                    unfocusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedLabelColor = Color.Black,
+                    unfocusedLabelColor = Color.Black.copy(alpha = 0.7f),
+                    focusedPlaceholderColor = Color.Black.copy(alpha = 0.5f),
+                    unfocusedPlaceholderColor = Color.Black.copy(alpha = 0.5f),
                     errorPlaceholderColor = Color.Red,
                     errorBorderColor = Color.Red,
                 ),
@@ -261,6 +267,13 @@ fun StudentSignupScreen(navController: NavHostController,
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            Text(
+                text = "Confirm Password",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
             // Confirm Password field with eye icon
             OutlinedTextField(
                 value = confirmPassword,
@@ -268,7 +281,7 @@ fun StudentSignupScreen(navController: NavHostController,
                     confirmPassword = it
                     confirmPasswordError = false
                 },
-                label = { Text("Confirm Password") },
+//                label = { Text("Confirm Password") },
                 placeholder = { Text("Confirm password") },
                 visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 trailingIcon = {
@@ -276,25 +289,24 @@ fun StudentSignupScreen(navController: NavHostController,
                         Icon(
                             imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
-                            tint = Color(0xFF667eea)
+                            tint = Color.Black
                         )
                     }
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White.copy(alpha = 0.95f),
                     unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
                     focusedBorderColor = Color.Transparent,
                     unfocusedBorderColor = Color.Transparent,
-                    focusedTextColor = Color(0xFF667eea),
-                    unfocusedTextColor = Color(0xFF667eea),
-                    focusedLabelColor = Color(0xFF667eea),
-                    unfocusedLabelColor = Color(0xFF667eea).copy(alpha = 0.7f),
-                    focusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
-                    unfocusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f)
+                    focusedTextColor = Color.Black,
+                    unfocusedTextColor = Color.Black,
+                    focusedLabelColor = Color.Black,
+                    unfocusedLabelColor = Color.Black.copy(alpha = 0.7f),
+                    focusedPlaceholderColor = Color.Black.copy(alpha = 0.5f),
+                    unfocusedPlaceholderColor = Color.Black.copy(alpha = 0.5f)
                 ),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true

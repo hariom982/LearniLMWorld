@@ -301,7 +301,7 @@ fun TrainerSignupScreen(navController: NavHostController,
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                tint = Color(0xFF667eea)
+                                tint = Color.Black
                             )
                         }
                     },
@@ -314,10 +314,10 @@ fun TrainerSignupScreen(navController: NavHostController,
                         unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color(0xFF667eea),
-                        unfocusedTextColor = Color(0xFF667eea),
-                        focusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f)
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedPlaceholderColor = Color.Black.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color.Black.copy(alpha = 0.5f)
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true
@@ -356,7 +356,7 @@ fun TrainerSignupScreen(navController: NavHostController,
                             Icon(
                                 imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = if (confirmPasswordVisible) "Hide password" else "Show password",
-                                tint = Color(0xFF667eea)
+                                tint = Color.Black
                             )
                         }
                     },
@@ -369,10 +369,10 @@ fun TrainerSignupScreen(navController: NavHostController,
                         unfocusedContainerColor = Color.White.copy(alpha = 0.95f),
                         focusedBorderColor = Color.Transparent,
                         unfocusedBorderColor = Color.Transparent,
-                        focusedTextColor = Color(0xFF667eea),
-                        unfocusedTextColor = Color(0xFF667eea),
-                        focusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f),
-                        unfocusedPlaceholderColor = Color(0xFF667eea).copy(alpha = 0.5f)
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedPlaceholderColor = Color.Black.copy(alpha = 0.5f),
+                        unfocusedPlaceholderColor = Color.Black.copy(alpha = 0.5f)
                     ),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     singleLine = true

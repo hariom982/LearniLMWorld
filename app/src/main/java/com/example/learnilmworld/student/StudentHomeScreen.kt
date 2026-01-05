@@ -52,8 +52,8 @@ fun StudentHomeScreen(navController: NavController) {
         ServiceCard(
             icon = "📖",
             iconColor = Color(0xFF10B981),
-            title = "English Training",
-            description = "Improve communication and language skills"
+            title = "Subject Mastery",
+            description = "Conceptual Understanding Build a robust framework"
         ),
         ServiceCard(
             icon = "👥",
@@ -85,15 +85,15 @@ fun StudentHomeScreen(navController: NavController) {
             buttonColor = Color(0xFF10B981),
             destination = "browse_trainers"
         ),
-        ActionCard(
-            icon = "💬",
-            iconColor = Color(0xFF3B82F6),
-            title = "Your Learning Journey",
-            description = "Keep track of your sessions, view feedback from trainers, and monitor your progress.",
-            buttonText = "View My Sessions",
-            buttonColor = Color(0xFF3B82F6),
-            destination = "view_sessions"
-        )
+//        ActionCard(
+//            icon = "💬",
+//            iconColor = Color(0xFF3B82F6),
+//            title = "Your Learning Journey",
+//            description = "Keep track of your sessions, view feedback from trainers, and monitor your progress.",
+//            buttonText = "View My Sessions",
+//            buttonColor = Color(0xFF3B82F6),
+//            destination = "sessions"
+//        )
     )
 
     Box(

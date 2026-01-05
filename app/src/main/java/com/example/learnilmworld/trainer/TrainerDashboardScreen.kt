@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.learnilmworld.R
+import com.example.learnilmworld.screen.StudentScreen
 import com.example.learnilmworld.screen.TrainerScreen
 import com.example.learnilmworld.screen.TrainerStatsCard
 import com.example.learnilmworld.viewModel.AuthViewModel
@@ -251,7 +252,7 @@ fun RecentBookingsSection(navController: NavHostController) {
                     color = Color(0xFF2D2D44)
                 )
 
-                TextButton(onClick = { /* Navigate to all students */ }) {
+                TextButton(onClick = { navController.navigate(TrainerScreen.Students.route) }) {
                     Text(
                         text = "View All \nStudents",
                         fontSize = 14.sp,

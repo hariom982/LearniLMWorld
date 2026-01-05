@@ -24,9 +24,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
-fun DashboardScreen() {
+fun DashboardScreen(navController: NavController) {
     val statsCards = listOf(
         StatsCard(
             icon = "📖",
@@ -92,7 +93,7 @@ fun DashboardScreen() {
 
             // Recent Sessions Section
             item {
-                RecentSessionsSection()
+                RecentSessionsSection(navController)
             }
         }
     }
@@ -160,7 +161,7 @@ fun StatsCardItem(stats: StatsCard) {
 }
 
 @Composable
-fun RecentSessionsSection() {
+fun RecentSessionsSection(navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -188,15 +189,6 @@ fun RecentSessionsSection() {
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF2D2D44)
                 )
-
-                TextButton(onClick = { /* Navigate to sessions */ }) {
-                    Text(
-                        text = "View All",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF8B7FD8)
-                    )
-                }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -242,7 +234,7 @@ fun RecentSessionsSection() {
 
                 // Book Session Button
                 Button(
-                    onClick = { /* Navigate to book session */ },
+                    onClick = {navController.navigate("browse_trainers")},
                     modifier = Modifier
                         .padding(horizontal = 25.dp)
                         .height(56.dp),

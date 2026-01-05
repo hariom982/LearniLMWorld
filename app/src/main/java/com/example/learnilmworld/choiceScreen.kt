@@ -300,7 +300,6 @@ fun GlassmorphicUserCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp)
             .scale(animatedScale)
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),

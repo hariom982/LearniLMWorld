@@ -53,7 +53,7 @@ fun ProfileScreen(viewModel: AuthViewModel,
     LaunchedEffect(currentUser) {
         currentUser?.let { user ->
             // Set your state variables with user data
-            fullName = user.fullName
+            fullName = user.fullName+user.lastName
             email = user.email
             phoneNumber = user.phoneNumber
             email = user.email

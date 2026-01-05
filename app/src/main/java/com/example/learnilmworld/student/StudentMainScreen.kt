@@ -45,7 +45,7 @@ fun StudentMainScreen(viewModel: AuthViewModel,
                 StudentHomeScreen(navController)
             }
             composable(StudentScreen.Dashboard.route) {
-                DashboardScreen()
+                DashboardScreen(navController)
             }
             composable(StudentScreen.Sessions.route) {
                 SessionsScreen()
