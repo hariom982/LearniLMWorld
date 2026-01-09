@@ -7,6 +7,6 @@ import retrofit2.http.POST
 
 interface TokenApi {
 
-    @POST("generate-token")  // Your endpoint path
+    @POST("token/generate-token")  // Your endpoint path
     fun getToken(@Body request: Map<String, String>): Call<TokenResponse>
 }

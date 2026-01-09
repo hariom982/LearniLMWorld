@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+//import com.example.learnilmworld.retrofit.mongo_backend.TempLoginScreen
 import com.example.learnilmworld.screen.Screen
 import com.example.learnilmworld.student.BrowseTrainersScreen
 import com.example.learnilmworld.student.StudentMainScreen
@@ -27,6 +28,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AppNavigation()
+//            val navController = rememberNavController()
+//            TempLoginScreen(navController)
         }
     }
     @Composable

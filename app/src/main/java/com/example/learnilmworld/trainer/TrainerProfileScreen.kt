@@ -21,11 +21,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
+import com.example.learnilmworld.models.User
+import com.example.learnilmworld.retrofit.mongo_backend.AuthManager
+import com.example.learnilmworld.retrofit.mongo_backend.ProfileResponse
 import com.example.learnilmworld.viewModel.AuthViewModel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 @Composable
 fun TrainerProfileScreen(viewModel: AuthViewModel,
                          navController: NavHostController) {
+    var profile by remember { mutableStateOf<User?>(null) }
     var profileImageUrl by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -47,27 +53,75 @@ fun TrainerProfileScreen(viewModel: AuthViewModel,
     var instagramUrl by remember { mutableStateOf("") }
     var youtubeUrl by remember { mutableStateOf("") }
     var linkedinUrl by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(true) }
 
     val daysOfWeek = listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
     var availableDays by remember { mutableStateOf(setOf<String>()) }
 
+    val coroutineScope = rememberCoroutineScope()
+
     val currentUser by viewModel.currentUser.collectAsState()
 
     // Pre-fill form with current user data
-    LaunchedEffect(currentUser) {
-        currentUser?.let { user ->
-            // Set your state variables with user data
-            fullName = user.fullName + user.lastName
-            email = user.email
-            phoneNumber = user.phoneNumber
-            nationality = user.nationality
-            location = user.location
-            bio = user.bio
-            languages = user.languagesToLearn
-            specializations = user.specializations
-            yearsOfExperience = user.yearsOfExperience.toString()
+//    LaunchedEffect(currentUser) {
+//        currentUser?.let { user ->
+//            // Set your state variables with user data
+//            fullName = user.fullName + user.lastName
+//            email = user.email
+//            phoneNumber = user.phoneNumber
+//            nationality = user.nationality
+//            location = user.location
+//            bio = user.bio
+//            languages = user.languagesToLearn
+//            specializations = user.specializations
+//            yearsOfExperience = user.yearsOfExperience.toString()
+//
+//        }
+//    }
 
+    LaunchedEffect(Unit) {
+        val currentFirebaseUser = viewModel.getCurrentFirebaseUser()
+        if (currentFirebaseUser == null) {
+            navController.navigate("login")
+            return@LaunchedEffect
         }
+
+        val tokenResult = currentFirebaseUser.getIdToken(false).await()
+        val token = tokenResult.token ?: run {
+            Toast.makeText(navController.context, "Failed to get auth token", Toast.LENGTH_SHORT).show()
+            return@LaunchedEffect
+        }
+
+        AuthManager.getProfile(token)
+            .onSuccess { mongoProfile ->
+                profile = mongoProfile
+
+                // Populate UI fields
+                fullName = mongoProfile.fullName+" "+mongoProfile.lastName
+                email = mongoProfile.email
+                phoneNumber = mongoProfile.phoneNumber ?: ""
+                nationality = mongoProfile.nationality ?: ""
+                location = mongoProfile.location ?: ""
+                bio = mongoProfile.bio ?: "nothing to describe"
+                yearsOfExperience = mongoProfile.yearsOfExperience?.toString() ?: ""
+                hourlyRate = mongoProfile.hourlyRate?.toString() ?: "25"
+                teachingStyle = mongoProfile.teachingStyle ?: "Conversational"
+                isAvailableForBookings = mongoProfile.isAvailableForBookings ?: true
+                languages = mongoProfile.languagesToTeach ?: mongoProfile.languagesToLearn ?: emptyList()
+                specializations = mongoProfile.specializations ?: emptyList()
+                isLoading = false
+            }
+            .onFailure { exception ->
+                isLoading = false
+                Toast.makeText(navController.context, "Failed to load profile: ${exception.message}", Toast.LENGTH_LONG).show()
+            }
+    }
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
     }
 
     Box(
@@ -75,8 +129,8 @@ fun TrainerProfileScreen(viewModel: AuthViewModel,
             .fillMaxSize()
             .background( brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFFD4A574),
-                    Color(0xFFE6B87D)
+                    Color(0xFF8C56E8),
+                    Color(0xFFA67DEF)
                 )
             ))
     ) {
@@ -410,7 +464,7 @@ fun TrainerProfileScreen(viewModel: AuthViewModel,
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Button(
-                        onClick = { /* Handle update profile */ },
+                        onClick = {/* Handle reset */},
                         modifier = Modifier
                             .weight(1f)
                             .height(56.dp),

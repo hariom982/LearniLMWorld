@@ -7,7 +7,8 @@ data class User(
     val lastName: String = "",
     val phoneNumber: String = "",
     val userType: String = "", // "STUDENT" or "TRAINER"
-    val createdAt: Long = System.currentTimeMillis(),
+//    val createdAt: Long = System.currentTimeMillis(),
+//    val createdAt: String? = null,
 
     // Student specific fields
     val nativeLanguage: String = "",

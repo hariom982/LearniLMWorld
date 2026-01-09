@@ -31,6 +31,10 @@ class AuthViewModel : ViewModel() {
         checkCurrentUser()
     }
 
+    fun getCurrentFirebaseUser(): com.google.firebase.auth.FirebaseUser? {
+        return repository.getCurrentUser()
+    }
+
     // Check if user is logged in
     private fun checkCurrentUser() {
         viewModelScope.launch {

@@ -63,8 +63,8 @@ fun TrainerReviewsScreen() {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFD4A574),
-                        Color(0xFFE6B87D)
+                        Color(0xFF8C56E8),
+                        Color(0xFFA67DEF)
                     )
                 )
             )

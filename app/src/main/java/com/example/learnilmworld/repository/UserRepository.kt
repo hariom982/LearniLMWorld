@@ -2,6 +2,7 @@ package com.example.learnilmworld.repository
 
 import android.util.Log
 import com.example.learnilmworld.models.User
+import com.example.learnilmworld.retrofit.mongo_backend.AuthManager
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
@@ -40,6 +41,10 @@ class UserRepository {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("User creation failed")
 
+            // 2. Get fresh ID token
+            val tokenResult = firebaseUser.getIdToken(false).await()
+            val token = tokenResult.token ?: throw Exception("Failed to get ID token")
+
             // Create user data object
             val user = User(
                 uid = firebaseUser.uid,
@@ -54,11 +59,23 @@ class UserRepository {
                 location = location,
                 qualification = qualification,
                 college = college,
-                createdAt = System.currentTimeMillis()
+//                createdAt = System.currentTimeMillis().toString()
             )
 
             // Save user data to Firestore
             usersCollection.document(firebaseUser.uid).set(user).await()
+
+            // 4. NEW: Save minimal profile to MongoDB
+            AuthManager.saveProfile(token, user)
+                .onSuccess {
+                    Log.d("UserRepo", "Profile saved to MongoDB: $fullName")
+                }
+                .onFailure { exception ->
+                    Log.e("UserRepo", "MongoDB save failed (non-critical)", exception)
+                }
+
+            Log.d("FirebaseRepo", "Student registered: ${firebaseUser.uid}")
+            Result.success(user)
 
             Log.d("FirebaseRepo", "Student registered: ${firebaseUser.uid}")
             Result.success(user)
@@ -90,6 +107,10 @@ class UserRepository {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("User creation failed")
 
+            // 2. Get fresh ID token
+            val tokenResult = firebaseUser.getIdToken(false).await()
+            val token = tokenResult.token ?: throw Exception("Failed to get ID token")
+
             // Create user data object
             val user = User(
                 uid = firebaseUser.uid,
@@ -108,11 +129,26 @@ class UserRepository {
                 nationality = nationality,
                 isAvailableForBookings = true,
                 averageRating = 0.0,
-                createdAt = System.currentTimeMillis()
+//                createdAt = System.currentTimeMillis().toString()
             )
 
             // Save user data to Firestore
             usersCollection.document(firebaseUser.uid).set(user).await()
+
+            // 4. NEW: Save minimal profile to MongoDB
+            AuthManager.saveProfile(token, user)
+                .onSuccess {
+                    Log.d("UserRepo", "Profile saved to MongoDB: $fullName")
+                }
+                .onFailure { exception ->
+                    Log.e("UserRepo", "MongoDB save failed (non-critical)", exception)
+                }
+
+            Log.d("FirebaseRepo", "Student registered: ${firebaseUser.uid}")
+            Result.success(user)
+
+            Log.d("FirebaseRepo", "Student registered: ${firebaseUser.uid}")
+            Result.success(user)
 
             Log.d("FirebaseRepo", "Trainer registered: ${firebaseUser.uid}")
             Result.success(user)

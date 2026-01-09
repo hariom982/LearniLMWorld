@@ -18,6 +18,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,13 +32,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.example.learnilmworld.models.User
+import com.example.learnilmworld.retrofit.mongo_backend.AuthManager
+import com.example.learnilmworld.retrofit.mongo_backend.ProfileResponse
 import com.example.learnilmworld.viewModel.AuthState
 import com.example.learnilmworld.viewModel.AuthViewModel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 
 @Composable
 fun ProfileScreen(viewModel: AuthViewModel,
                   navController: NavHostController) {
+    val coroutineScope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(true) }
+    var profile by remember { mutableStateOf<User?>(null) }
+
     val currentUser by viewModel.currentUser.collectAsState()
     val authState by viewModel.authState.collectAsState()
 
@@ -49,20 +59,23 @@ fun ProfileScreen(viewModel: AuthViewModel,
     var location by remember { mutableStateOf("") }
     var qualification by remember { mutableStateOf("") }
     var college by remember { mutableStateOf("") }
+    var languagesToLearn by remember { mutableStateOf<List<String>>(emptyList()) }
+    var nativeLanguage by remember { mutableStateOf("") }
+    var learningLevel by remember { mutableStateOf("") }
 
-    LaunchedEffect(currentUser) {
-        currentUser?.let { user ->
-            // Set your state variables with user data
-            fullName = user.fullName+user.lastName
-            email = user.email
-            phoneNumber = user.phoneNumber
-            email = user.email
-            bio = user.bio
-            location = user.location
-            qualification = user.qualification
-            college = user.college
-        }
-    }
+//    LaunchedEffect(currentUser) {
+//        currentUser?.let { user ->
+//            // Set your state variables with user data
+//            fullName = user.fullName+user.lastName
+//            email = user.email
+//            phoneNumber = user.phoneNumber
+//            email = user.email
+//            bio = user.bio
+//            location = user.location
+//            qualification = user.qualification
+//            college = user.college
+//        }
+//    }
 
 //    LaunchedEffect(authState) {
 //        when (authState) {
@@ -76,6 +89,54 @@ fun ProfileScreen(viewModel: AuthViewModel,
 //            else -> {}
 //        }
 //    }
+    // Fetch profile from MongoDB when screen loads
+    LaunchedEffect(Unit) {
+        val firebaseUser = viewModel.getCurrentFirebaseUser()
+        if (firebaseUser == null) {
+            navController.navigate("choicescreen") {
+                popUpTo(0) { inclusive = true }
+            }
+            return@LaunchedEffect
+        }
+
+        val tokenResult = firebaseUser.getIdToken(false).await()
+        val token = tokenResult.token
+        if (token == null) {
+            isLoading = false
+            return@LaunchedEffect
+        }
+
+        coroutineScope.launch {
+            AuthManager.getProfile(token)
+                .onSuccess { mongoProfile ->
+                    profile = mongoProfile
+
+                    // Populate all fields
+                    fullName = mongoProfile.fullName + " " + (mongoProfile.lastName ?: "")
+                    email = mongoProfile.email
+                    phoneNumber = mongoProfile.phoneNumber ?: ""
+                    location = mongoProfile.location ?: ""
+                    nativeLanguage = mongoProfile.nativeLanguage ?: ""
+                    learningLevel = mongoProfile.learningLevel ?: ""
+                    qualification = mongoProfile.qualification ?: ""
+                    college = mongoProfile.college ?: ""
+                    languagesToLearn = mongoProfile.languagesToLearn ?: emptyList()
+
+                    isLoading = false
+                }
+                .onFailure { exception ->
+                    isLoading = false
+                    // Optional: Show toast or snackbar
+                }
+        }
+    }
+
+    if (isLoading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = Color.White)
+        }
+        return
+    }
 
     Box(
         modifier = Modifier
@@ -83,8 +144,8 @@ fun ProfileScreen(viewModel: AuthViewModel,
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFD4A574),
-                        Color(0xFFE6B87D)
+                        Color(0xFF8C56E8),
+                        Color(0xFFA67DEF)
                     )
                 )
             )
