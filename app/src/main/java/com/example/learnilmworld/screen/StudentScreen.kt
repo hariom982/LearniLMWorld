@@ -15,14 +15,21 @@ sealed class StudentScreen(val route: String, val title: String, val icon: Image
     object Profile : StudentScreen("profile", "My Profile", Icons.Default.Person)
 }
 
-// Service Card Data
-data class ServiceCard(
-    val icon: String,
-    val iconColor: Color,
-    val title: String,
-    val description: String
+// language Card Data
+data class LanguageCard(
+    val flag: String,
+    val language: String,
+    val description: String,
+    val backgroundColor: Color
 )
 
+data class CourseSlide(
+    val title: String,
+    val description: String,
+    val backgroundColor: Color,
+    val icon: String,
+    val destination: String
+)
 data class ActionCard(
     val icon: String,
     val iconColor: Color,
@@ -31,4 +38,33 @@ data class ActionCard(
     val buttonText: String,
     val buttonColor: Color,
     val destination: String
+)
+
+data class UpskillAddon(
+    val icon: String,
+    val title: String,
+    val subtitle: String,
+    val backgroundColor: Color
+)
+data class SubjectsCard(
+    val icon: String,
+    val title: String,
+    val subtitle: String,
+    val backgroundColor: Color
+)
+
+data class WisdomCard(
+    val icon: String,
+    val title: String,
+    val subtitle: String,
+    val iconColor: Color,
+    val btntext: String
+)
+
+data class NewsUpdate(
+    val image: String, // emoji or icon
+    val title: String,
+    val description: String,
+    val date: String,
+    val backgroundColor: Color
 )

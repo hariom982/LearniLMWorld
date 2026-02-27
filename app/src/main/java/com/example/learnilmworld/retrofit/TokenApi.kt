@@ -9,4 +9,11 @@ interface TokenApi {
 
     @POST("token/generate-token")  // Your endpoint path
     fun getToken(@Body request: Map<String, String>): Call<TokenResponse>
+
+    @POST("token/create-room")
+    suspend fun createRoom(@Body body: Map<String, String>): RoomResponse
+
+    @POST("token/join-token")
+    fun getJoinToken(@Body body: Map<String, String>): Call<TokenResponse>
+
 }

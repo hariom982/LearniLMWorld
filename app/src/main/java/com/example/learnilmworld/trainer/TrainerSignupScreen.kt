@@ -183,9 +183,9 @@ fun TrainerSignupScreen(navController: NavHostController,
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                        Color(0xFFf093fb)
+                        Color(0xFFFFFFFF),
+                        Color(0xFF2E52D9),
+                        Color(0xFF2E52D9)
                     )
                 )
             )
@@ -217,7 +217,7 @@ fun TrainerSignupScreen(navController: NavHostController,
             SignupHeader(
                 emoji = "👨‍🏫",
                 title = "Trainer Sign Up",
-                subtitle = "Share your language expertise"
+                subtitle = "Share your expertise"
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -677,7 +677,7 @@ fun ResumeUploadSection(
 ) {
     Column {
         Text(
-            text = "Upload Resume (Optional)",
+            text = "Upload Resume",
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             color = Color.White,
@@ -795,8 +795,8 @@ fun SignupHeader(emoji: String, title: String, subtitle: String) {
                 .background(
                     brush = Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFF667eea),
-                            Color(0xFF764ba2)
+                            Color(0xFFFFFFFF),
+                            Color(0xFF2E52D9)
                         )
                     ),
                     shape = RoundedCornerShape(20.dp)

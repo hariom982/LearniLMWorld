@@ -3,12 +3,15 @@ package com.example.learnilmworld.student
 import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -23,6 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import com.example.learnilmworld.BookingDialog
@@ -32,8 +37,9 @@ import kotlinx.coroutines.tasks.await
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BrowseTrainersScreen(navController: NavController) {
-    var searchQuery by remember { mutableStateOf("") }
+fun BrowseTrainersScreen(navController: NavController,
+                         selectedLanguage: String? = null) {
+    var searchQuery by remember { mutableStateOf(selectedLanguage ?: "") }
     var selectedFilter by remember { mutableStateOf("All") }
     var trainers by remember { mutableStateOf<List<User>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -42,8 +48,10 @@ fun BrowseTrainersScreen(navController: NavController) {
     val context = LocalContext.current
     val firestore = FirebaseFirestore.getInstance()
 
+    var showProfileDialog by remember { mutableStateOf(false) }
     var showBookingDialog by remember { mutableStateOf(false) }
     var selectedTrainer by remember { mutableStateOf<User?>(null) }
+    var favoriteTrainerIds by remember { mutableStateOf<Set<String>>(emptySet()) }
 
 
     // Fetch trainers from Firestore
@@ -76,6 +84,7 @@ fun BrowseTrainersScreen(navController: NavController) {
 
             val matchesFilter = when (selectedFilter) {
                 "All" -> true
+                "Favorites" -> favoriteTrainerIds.contains(trainer.uid)
                 "Top Rated" -> trainer.averageRating >= 4.5
                 "Experienced" -> trainer.yearsOfExperience >= 10
                 "Available" -> trainer.isAvailableForBookings
@@ -86,7 +95,7 @@ fun BrowseTrainersScreen(navController: NavController) {
         }
     }
 
-    val filterOptions = listOf("All", "Top Rated", "Experienced", "Available")
+    val filterOptions = listOf("All","Favorites", "Top Rated", "Experienced", "Available")
 
     Box(
         modifier = Modifier
@@ -94,8 +103,9 @@ fun BrowseTrainersScreen(navController: NavController) {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFD4A574),
-                        Color(0xFFE6B87D)
+                        Color(0xFF3F51B5),
+                        Color(0xFF6073E3),
+                        Color(0xFFFFF5E1)
                     )
                 )
             )
@@ -105,14 +115,25 @@ fun BrowseTrainersScreen(navController: NavController) {
         ) {
             // Header with search
             Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFD4A574),
+                modifier = Modifier.fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF3F51B5),
+                                Color(0xFF6073E3),
+                            )
+                        )
+                    ),
+                color = Color.Transparent,
                 shadowElevation = 4.dp
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(start = 15.dp, end = 15.dp, bottom = 15.dp)
+                        .windowInsetsPadding(
+                            WindowInsets.statusBars.only(WindowInsetsSides.Top)
+                        )
                 ) {
                     // Back button and title
                     Row(
@@ -132,7 +153,7 @@ fun BrowseTrainersScreen(navController: NavController) {
                                 Icon(
                                     imageVector = Icons.Default.ArrowBack,
                                     contentDescription = "Back",
-                                    tint = Color(0xFF2D2D44)
+                                    tint = Color.White
                                 )
                             }
 
@@ -140,7 +161,7 @@ fun BrowseTrainersScreen(navController: NavController) {
                                 text = "Browse Trainers",
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF2D2D44)
+                                color = Color.White
                             )
                         }
                     }
@@ -153,13 +174,16 @@ fun BrowseTrainersScreen(navController: NavController) {
                         onValueChange = { searchQuery = it },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(20.dp)
                             .shadow(2.dp, RoundedCornerShape(16.dp)),
                         placeholder = {
-                            Text(
-                                "Search by name, language, or specialization...",
-                                fontSize = 14.sp,
-                                color = Color(0xFF9CA3AF)
-                            )
+                            LazyRow{
+                                item {  Text(
+                                    "Search by name, language, or specialization...",
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF9CA3AF)
+                                )}
+                            }
                         },
                         leadingIcon = {
                             Icon(
@@ -186,7 +210,6 @@ fun BrowseTrainersScreen(navController: NavController) {
                             unfocusedIndicatorColor = Color.Transparent
                         ),
                         shape = RoundedCornerShape(16.dp),
-                        singleLine = true
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -279,13 +302,21 @@ fun BrowseTrainersScreen(navController: NavController) {
                         items(filteredTrainers) { trainer ->
                             TrainerCard(
                                 trainer = trainer,
-                                onViewProfile = {
-                                    // Navigate to trainer profile
-                                    navController.navigate("trainer_profile/${trainer.uid}")
+                                onCardClick = {
+                                    selectedTrainer = trainer
+                                    showProfileDialog = true
                                 },
                                 onBookSession = {
                                     selectedTrainer = trainer
                                     showBookingDialog = true
+                                },
+                                isFavorite = favoriteTrainerIds.contains(trainer.uid),
+                                onToggleFavorite = {
+                                    favoriteTrainerIds = if (favoriteTrainerIds.contains(trainer.uid)) {
+                                        favoriteTrainerIds - trainer.uid
+                                    } else {
+                                        favoriteTrainerIds + trainer.uid
+                                    }
                                 }
                             )
                         }
@@ -297,6 +328,8 @@ fun BrowseTrainersScreen(navController: NavController) {
                 }
             }
         }
+
+        //Booking dialog
         if (showBookingDialog && selectedTrainer != null) {
             BookingDialog(
                 trainerName = selectedTrainer!!.fullName,
@@ -308,6 +341,430 @@ fun BrowseTrainersScreen(navController: NavController) {
                 }
             )
         }
+        // Profile Dialog
+        if (showProfileDialog && selectedTrainer != null) {
+            TrainerProfileDialog(
+                trainer = selectedTrainer!!,
+                onDismiss = {
+                    showProfileDialog = false
+                },
+                onBookSession = {
+                    showProfileDialog = false
+                    showBookingDialog = true
+                },
+                isFavorite = favoriteTrainerIds.contains(selectedTrainer!!.uid),
+                onToggleFavorite = {
+                    favoriteTrainerIds = if (favoriteTrainerIds.contains(selectedTrainer!!.uid)) {
+                        favoriteTrainerIds - selectedTrainer!!.uid
+                    } else {
+                        favoriteTrainerIds + selectedTrainer!!.uid
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun TrainerProfileDialog(
+    trainer: User,
+    onDismiss: () -> Unit,
+    onBookSession: () -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
+) {
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.85f)
+                .shadow(16.dp, RoundedCornerShape(24.dp)),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            )
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                // Header with gradient background
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF8B7FD8),
+                                    Color(0xFFA893E8)
+                                )
+                            )
+                        )
+                        .padding(20.dp)
+                ) {
+                    Column {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = Color.White
+                                )
+                            }
+
+                            IconButton(
+                                onClick = onToggleFavorite,
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Like",
+                                    tint = if (isFavorite) Color(0xFFEF4444) else Color.White
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Profile Image
+                            Box(
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White.copy(alpha = 0.3f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(40.dp),
+                                    tint = Color.White
+                                )
+                            }
+
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(
+                                    text = trainer.fullName,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Star,
+                                        contentDescription = null,
+                                        tint = Color(0xFFFFB020),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = String.format("%.1f", trainer.averageRating),
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                    Text(
+                                        text = "(0 reviews)",
+                                        fontSize = 14.sp,
+                                        color = Color.White.copy(alpha = 0.8f)
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = Color.White.copy(alpha = 0.3f)
+                                ) {
+                                    Text(
+                                        text = "$${trainer.hourlyRate.toInt()}/hour",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Scrollable Content
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    // Quick Stats
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        StatItem(
+                            icon = Icons.Default.AccessTime,
+                            value = "${trainer.yearsOfExperience}+",
+                            label = "Years Exp"
+                        )
+                        StatItem(
+                            icon = Icons.Default.Language,
+                            value = "${trainer.languagesToTeach.size}",
+                            label = "Languages"
+                        )
+                        StatItem(
+                            icon = Icons.Default.CheckCircle,
+                            value = if (trainer.isAvailableForBookings) "Available" else "Busy",
+                            label = "Status"
+                        )
+                    }
+
+                    Divider(color = Color(0xFFE5E7EB))
+
+                    // Bio Section
+                    if (trainer.bio.isNotEmpty()) {
+                        SectionHeader(
+                            icon = Icons.Default.Info,
+                            title = "About Me"
+                        )
+                        Text(
+                            text = trainer.bio,
+                            fontSize = 15.sp,
+                            color = Color(0xFF6B7280),
+                            lineHeight = 22.sp
+                        )
+                    }
+
+                    // Languages Section
+                    SectionHeader(
+                        icon = Icons.Default.Language,
+                        title = "Languages I Teach"
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        trainer.languagesToTeach.forEach { language ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = Color(0xFF10B981).copy(alpha = 0.1f),
+                                modifier = Modifier.weight(1f, fill = false)
+                            ) {
+                                Text(
+                                    text = language,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF10B981),
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Specializations Section
+                    if (trainer.specializations.isNotEmpty()) {
+                        SectionHeader(
+                            icon = Icons.Default.Star,
+                            title = "Specializations"
+                        )
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            trainer.specializations.forEach { spec ->
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(Color(0xFFA855F7), CircleShape)
+                                    )
+                                    Text(
+                                        text = spec,
+                                        fontSize = 15.sp,
+                                        color = Color(0xFF2D2D44)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Location
+                    SectionHeader(
+                        icon = Icons.Default.LocationOn,
+                        title = "Teaching Mode"
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFFF3F4F6)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Computer,
+                                contentDescription = null,
+                                tint = Color(0xFF6B7280)
+                            )
+                            Text(
+                                text = "Online Sessions via Video Call",
+                                fontSize = 15.sp,
+                                color = Color(0xFF2D2D44)
+                            )
+                        }
+                    }
+                }
+
+                // Action Buttons
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shadowElevation = 8.dp,
+                    color = Color.White
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+//                        OutlinedButton(
+//                            onClick = onViewFullProfile,
+//                            modifier = Modifier
+//                                .weight(1f)
+//                                .height(50.dp),
+//                            shape = RoundedCornerShape(12.dp),
+//                            colors = ButtonDefaults.outlinedButtonColors(
+//                                contentColor = Color(0xFFA855F7)
+//                            ),
+//                            border = androidx.compose.foundation.BorderStroke(
+//                                2.dp,
+//                                Color(0xFFA855F7)
+//                            )
+//                        ) {
+//                            Text(
+//                                text = "Full Profile",
+//                                fontSize = 15.sp,
+//                                fontWeight = FontWeight.Bold
+//                            )
+//                        }
+
+                        Button(
+                            onClick = onBookSession,
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(50.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFB8E986)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 4.dp
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color(0xFF2D2D44)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Book Session",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF2D2D44)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun StatItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: String,
+    label: String
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFFA855F7),
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = value,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2D2D44)
+        )
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            color = Color(0xFF6B7280)
+        )
+    }
+}
+
+@Composable
+fun SectionHeader(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFFA855F7),
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = title,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2D2D44)
+        )
     }
 }
 
@@ -336,8 +793,10 @@ fun FilterChip(
 @Composable
 fun TrainerCard(
     trainer: User,
-    onViewProfile: () -> Unit,
-    onBookSession:() -> Unit
+    onCardClick: () -> Unit,
+    onBookSession:() -> Unit,
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit
 ) {
     var isLiked by remember { mutableStateOf(false) }
     var showBookingDialog by remember { mutableStateOf(false) }
@@ -345,7 +804,8 @@ fun TrainerCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(8.dp, RoundedCornerShape(24.dp)),
+            .shadow(8.dp, RoundedCornerShape(24.dp))
+            .clickable { onCardClick() },
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -576,25 +1036,23 @@ fun TrainerCard(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 OutlinedButton(
-                    onClick = {
-                        isLiked = !isLiked
-                    },
+                    onClick = onToggleFavorite,
                     modifier = Modifier
                         .weight(0.3f)
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = if (isLiked) Color(0xFFFFE5E5) else Color.Transparent
+                        containerColor = if (isFavorite) Color(0xFFFFE5E5) else Color.Transparent
                     ),
                     border = androidx.compose.foundation.BorderStroke(
                         1.5.dp,
-                        if (isLiked) Color(0xFFEF4444) else Color(0xFFE5E7EB)
+                        if (isFavorite) Color(0xFFEF4444) else Color(0xFFE5E7EB)
                     )
                 ) {
                     Icon(
-                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Like",
-                        tint = if (isLiked) Color(0xFFEF4444) else Color(0xFF6B7280),
+                        tint = if (isFavorite) Color(0xFFEF4444) else Color(0xFF6B7280),
                         modifier = Modifier.size(20.dp)
                     )
                 }

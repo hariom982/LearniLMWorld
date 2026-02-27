@@ -19,9 +19,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures{
+        viewBinding = true
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -76,7 +81,11 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
 
     // ZegoCloud Video Call SDK
-    implementation("com.github.ZEGOCLOUD:zego_uikit_prebuilt_call_android:+")
+//    implementation("com.github.ZEGOCLOUD:zego_uikit_prebuilt_call_android:+")
+
+    //100ms
+    implementation("live.100ms:android-sdk:2.9.+")
+    implementation("live.100ms:video-view:2.9.+")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.11.0")

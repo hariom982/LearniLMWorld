@@ -1,6 +1,7 @@
 package com.example.learnilmworld
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -42,9 +45,9 @@ fun choiceScreen(navController: NavHostController) {
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                        Color(0xFFf093fb)
+                        Color(0xFFFFFFFF),
+                        Color(0xFF2E52D9),
+                        Color(0xFF2E52D9)
                     )
                 )
             )
@@ -64,31 +67,31 @@ fun choiceScreen(navController: NavHostController) {
                 AnimatedLogo()
             }
 
-            item{
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-
-            // App Title
-            item{
-                Text(
-                    text = "LearniLMWorld",
-                    fontSize = 40.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    letterSpacing = (-1).sp,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-
-            item{
-                Text(
-                    text = "Master Languages Together",
-                    fontSize = 17.sp,
-                    color = Color.White.copy(alpha = 0.95f),
-                    fontWeight = FontWeight.Normal,
-                    modifier = Modifier.padding(bottom = 48.dp)
-                )
-            }
+//            item{
+//                Spacer(modifier = Modifier.height(16.dp))
+//            }
+//
+//            // App Title
+//            item{
+//                Text(
+//                    text = "LearniLMWorld",
+//                    fontSize = 40.sp,
+//                    fontWeight = FontWeight.ExtraBold,
+//                    color = Color.White,
+//                    letterSpacing = (-1).sp,
+//                    modifier = Modifier.padding(bottom = 8.dp)
+//                )
+//            }
+//
+//            item{
+//                Text(
+//                    text = "Master Languages Together",
+//                    fontSize = 17.sp,
+//                    color = Color.White.copy(alpha = 0.95f),
+//                    fontWeight = FontWeight.Normal,
+//                    modifier = Modifier.padding(bottom = 48.dp)
+//                )
+//            }
 
             // Sign Up Prompt
             item{
@@ -194,18 +197,17 @@ fun AnimatedLogo() {
 
     Box(
         modifier = Modifier
-            .size(80.dp)
+            .size(250.dp)
             .scale(scale)
-            .shadow(8.dp, RoundedCornerShape(24.dp))
             .background(
-                color = Color.White.copy(alpha = 0.2f),
-                shape = RoundedCornerShape(24.dp)
+               color = Color.Transparent
             ),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "🌍",
-            fontSize = 40.sp
+        Image(
+            painter = painterResource(R.drawable.applogolearnilm),
+            contentDescription = "Logo",
+            modifier = Modifier.size(250.dp)
         )
     }
 }
@@ -305,9 +307,6 @@ fun GlassmorphicUserCard(
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = animatedElevation
         )
     ) {
         Box(
@@ -381,10 +380,6 @@ fun AnimatedIconContainer(
             .size(72.dp)
             .rotate(rotation)
             .scale(scale)
-            .shadow(
-                elevation = if (isSelected) 12.dp else 8.dp,
-                shape = RoundedCornerShape(20.dp)
-            )
             .background(
                 brush = if (isSelected) {
                     Brush.linearGradient(

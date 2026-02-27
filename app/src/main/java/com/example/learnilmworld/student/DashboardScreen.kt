@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -65,8 +66,9 @@ fun DashboardScreen(navController: NavController) {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF8C56E8),
-                        Color(0xFFA67DEF)
+                        Color(0xFF3F51B5),
+                        Color(0xFF6073E3),
+                        Color(0xFFFFF5E1)
                     )
                 )
             )
@@ -187,6 +189,7 @@ fun RecentSessionsSection(navController: NavController) {
                     text = "Recent Sessions",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.SansSerif,
                     color = Color(0xFF2D2D44)
                 )
             }
@@ -234,12 +237,12 @@ fun RecentSessionsSection(navController: NavController) {
 
                 // Book Session Button
                 Button(
-                    onClick = {navController.navigate("browse_trainers")},
+                    onClick = {navController.navigate("browse_trainers/")},
                     modifier = Modifier
                         .padding(horizontal = 25.dp)
                         .height(56.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFFF8C42)
+                        containerColor = Color(0xFF10B981)
                     ),
                     shape = RoundedCornerShape(16.dp),
                     elevation = ButtonDefaults.buttonElevation(

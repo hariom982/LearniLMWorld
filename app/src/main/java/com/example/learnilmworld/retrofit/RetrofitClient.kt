@@ -6,8 +6,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-//    private const val BASE_URL = "https://learnilmworld-backend.onrender.com/"
-    private const val BASE_URL = "http://192.168.29.124:3000/api/"
+//    private const val BASE_URL = "https://learnilmworld-backend-4.onrender.com/api/"
+    private const val BASE_URL = "https://learnilmworld-backend-4.onrender.com/api/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY

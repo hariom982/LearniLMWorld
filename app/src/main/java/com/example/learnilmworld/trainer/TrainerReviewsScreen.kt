@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -63,8 +64,9 @@ fun TrainerReviewsScreen() {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF8C56E8),
-                        Color(0xFFA67DEF)
+                        Color(0xFF3F51B5),
+                        Color(0xFF6073E3),
+                        Color(0xFFFFF5E1)
                     )
                 )
             )
@@ -405,3 +407,18 @@ fun EmptyReviewsCard() {
         }
     }
 }
+
+
+@Preview(
+    name = "Trainer Reviews Screen",
+    showBackground = true,
+    device = "spec:width=411dp,height=891dp"
+)
+@Composable
+fun TrainerReviewsScreenPreview() {
+    MaterialTheme {
+        TrainerReviewsScreen()
+    }
+}
+
+

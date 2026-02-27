@@ -2,20 +2,27 @@ package com.example.learnilmworld
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,10 +34,13 @@ import com.example.learnilmworld.viewModel.AuthViewModel
 import com.google.accompanist.pager.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
 import kotlin.math.absoluteValue
+import kotlin.math.cos
+import kotlin.math.sin
 
 data class OnboardingPage(
-    val emoji: String?,
+    val imageRes: Int?, // Change from emoji to image resource
     val title: String,
     val description: String,
     val floatingEmojis: List<String>
@@ -44,43 +54,28 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     val viewModel: AuthViewModel = viewModel()
     val navController = rememberNavController()
     val authState by viewModel.authState.collectAsState()
-//    val currentUser by viewModel.currentUser.collectAsState()
-//    // Auto-navigate on app start if user is logged in
-//
-//        LaunchedEffect(currentUser) {
-//            currentUser?.let { user ->
-//                val route = if (user.userType == "STUDENT") {
-//                    "student_home"
-//                } else {
-//                    "trainer_home"
-//                }
-//                navController.navigate(route) {
-//                    popUpTo(0) { inclusive = true }
-//                }
-//            }
-//        }
 
     val pages = listOf(
         OnboardingPage(
-            emoji = "🌎",
+            imageRes = R.drawable.onboarding1, // Replace with your image resource
             title = "Learn Languages\nFrom Anywhere",
             description = "Connect with native speakers and expert trainers from around the world to master any language.",
             floatingEmojis = listOf("🇪🇸", "🇫🇷", "🇩🇪", "🇯🇵")
         ),
         OnboardingPage(
-            emoji = "🌎",
+            imageRes = R.drawable.imageremovebgpreview, // Replace with your image resource
             title = "Expert Native\nTrainers",
             description = "Learn from certified language experts who bring authentic cultural insights to every lesson.",
             floatingEmojis = listOf("💬", "📚", "🎯", "⭐")
         ),
         OnboardingPage(
-            emoji = "🌎",
+            imageRes = R.drawable.image3, // Replace with your image resource
             title = "Interactive\nLearning Tools",
             description = "Engage with videos, quizzes, live sessions, and personalized practice to accelerate your progress.",
             floatingEmojis = listOf("🎥", "🎧", "📝", "🏆")
         ),
         OnboardingPage(
-            emoji = "🌎",
+            imageRes = R.drawable.image4, // Replace with your image resource
             title = "Start Your\nJourney Today",
             description = "Join thousands of learners achieving fluency. Your language adventure begins now!",
             floatingEmojis = listOf("✨", "🎊", "🌟", "💫")
@@ -90,89 +85,101 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                        Color(0xFFf093fb)
-                    )
-                )
-            )
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.learnilmbg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
         // Animated particles background
         FloatingParticles()
 
-        // App name at top
         AppNameHeader()
 
-        // Skip button
-//        TextButton(
-//            onClick = {navController.navigate("choicescreen")},
-//            modifier = Modifier
-//                .align(Alignment.TopEnd)
-//                .padding(top = 40.dp, end = 24.dp)
-//        ) {
-//            Text(
-//                text = "Skip",
-//                color = Color.White,
-//                fontSize = 16.sp,
-//                fontWeight = FontWeight.SemiBold
-//            )
-//        }
-
-        // Pager content
+        // Content
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Bottom
         ) {
-            HorizontalPager(
-                count = pages.size,
-                state = pagerState,
+            Box(
                 modifier = Modifier
-                    .weight(1f)
                     .fillMaxWidth()
-            ) { page ->
-                OnboardingPageContent(
-                    page = pages[page],
-                    isVisible = pagerState.currentPage == page
+                    .weight(1f),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+
+                // Pager (WITHOUT image now)
+                HorizontalPager(
+                    count = pages.size,
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize()
+                ) { }
+
+                // Illustration placed just above card (overlapping)
+                OnboardingImageContent(
+                    page = pages[pagerState.currentPage],
+                    isVisible = true,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .offset(y = 50.dp)   // move image slightly down to touch card
                 )
             }
 
-            Spacer(modifier = Modifier.height(40.dp))
+            // White card containing title, description, indicators, and buttons
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 32.dp, vertical = 40.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Title
+                    OnboardingText(
+                        page = pages[pagerState.currentPage],
+                        isVisible = true
+                    )
 
-            // Page indicators
-            PageIndicators(
-                pageCount = pages.size,
-                currentPage = pagerState.currentPage,
-                onPageClick = { page ->
-                    scope.launch {
-                        pagerState.animateScrollToPage(page)
-                    }
+                    Spacer(modifier = Modifier.height(40.dp))
+
+                    // Page indicators
+                    PageIndicators(
+                        pageCount = pages.size,
+                        currentPage = pagerState.currentPage,
+                        onPageClick = { page ->
+                            scope.launch {
+                                pagerState.animateScrollToPage(page)
+                            }
+                        }
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Navigation buttons
+                    NavigationButtons(
+                        currentPage = pagerState.currentPage,
+                        totalPages = pages.size,
+                        onNext = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        },
+                        onBack = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                            }
+                        },
+                        onGetStarted = onFinish
+                    )
                 }
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
-            // Navigation buttons
-            NavigationButtons(
-                currentPage = pagerState.currentPage,
-                totalPages = pages.size,
-                onNext = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                    }
-                },
-                onBack = {
-                    scope.launch {
-                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                    }
-                },
-                onGetStarted = onFinish
-            )
-
-            Spacer(modifier = Modifier.height(60.dp))
+            }
         }
     }
 }
@@ -195,15 +202,14 @@ fun AppNameHeader() {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 60.dp),
+                .padding(top = 10.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "🌍 LearniLMWorld",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+            Image(
+                painter = painterResource(R.drawable.logo2),
+                contentDescription = "App Logo",
+                modifier = Modifier.size(250.dp)
             )
         }
     }
@@ -256,6 +262,7 @@ fun FloatingParticle(index: Int) {
 
     val size = (30 + index * 5).dp
 
+
     Box(
         modifier = Modifier
             .offset(
@@ -264,14 +271,15 @@ fun FloatingParticle(index: Int) {
             )
             .size(size)
             .alpha(alpha)
-            .background(Color.White, CircleShape)
+            .background(color = Color.White, shape = CircleShape)
     )
 }
 
 @Composable
-fun OnboardingPageContent(
+fun OnboardingImageContent(
     page: OnboardingPage,
-    isVisible: Boolean
+    isVisible: Boolean,
+    modifier: Modifier = Modifier
 ) {
     val scale by animateFloatAsState(
         targetValue = if (isVisible) 1f else 0.9f,
@@ -285,118 +293,66 @@ fun OnboardingPageContent(
         label = "alpha"
     )
 
-    Column(
+    Box(
         modifier = Modifier
-            .fillMaxSize()
+            .height(200.dp)
             .scale(scale)
-            .alpha(alpha)
-            .padding(horizontal = 40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .alpha(alpha),
     ) {
-        // Illustration with floating emojis
+        // Illustration only
         Box(
-            modifier = Modifier.size(280.dp),
-            contentAlignment = Alignment.Center
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
         ) {
-            // Main emoji circle with pulse animation
-            PulsingIllustration(emoji = page.emoji.toString(), isVisible = isVisible)
-
-            // Floating emojis around
-            FloatingEmojis(emojis = page.floatingEmojis, isVisible = isVisible)
+            PulsingIllustrationWithImage(imageRes = page.imageRes, isVisible = isVisible)
         }
+    }
+}
 
-        Spacer(modifier = Modifier.height(60.dp))
-
+@Composable
+fun OnboardingText(
+    page: OnboardingPage,
+    isVisible: Boolean
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         // Title
         Text(
             text = page.title,
-            fontSize = 36.sp,
+            fontSize = 32.sp,
             fontWeight = FontWeight.ExtraBold,
-            color = Color.White,
+            color = Color(0xFF3F51B5),
             textAlign = TextAlign.Center,
-            lineHeight = 44.sp
+            lineHeight = 40.sp
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Description
         Text(
             text = page.description,
-            fontSize = 18.sp,
-            color = Color.White.copy(alpha = 0.9f),
+            fontSize = 16.sp,
+            color = Color.Gray,
             textAlign = TextAlign.Center,
-            lineHeight = 28.sp,
-            modifier = Modifier.padding(horizontal = 20.dp)
+            lineHeight = 24.sp
         )
     }
 }
 
 @Composable
-fun PulsingIllustration(emoji: String, isVisible: Boolean) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "pulse_scale"
-    )
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 1.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulse_ring"
-    )
-
-    val pulseAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "pulse_alpha"
-    )
-
+fun PulsingIllustrationWithImage(imageRes: Int?, isVisible: Boolean) {
     Box(
-        modifier = Modifier.size(280.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.fillMaxSize()
     ) {
-        // Pulse ring
-        Box(
-            modifier = Modifier
-                .size(280.dp)
-                .scale(pulseScale)
-                .alpha(pulseAlpha)
-                .background(Color.White.copy(alpha = 0.3f), CircleShape)
-        )
-
-        // Main circle
-        Surface(
-            modifier = Modifier
-                .size(280.dp)
-                .scale(scale),
-            shape = CircleShape,
-            color = Color.White.copy(alpha = 0.1f),
-            border = androidx.compose.foundation.BorderStroke(3.dp, Color.White.copy(alpha = 0.3f))
-        ) {
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text(
-                    text = emoji,
-                    fontSize = 120.sp
-                )
-            }
+        if (imageRes != null) {
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = "Onboarding illustration",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit
+            )
         }
     }
 }
@@ -404,10 +360,10 @@ fun PulsingIllustration(emoji: String, isVisible: Boolean) {
 @Composable
 fun FloatingEmojis(emojis: List<String>, isVisible: Boolean) {
     val positions = listOf(
-        Pair(-100.dp, -100.dp),  // Top left
-        Pair(100.dp, -90.dp),    // Top right
-        Pair(-90.dp, 100.dp),    // Bottom left
-        Pair(110.dp, 110.dp)     // Bottom right
+        Pair(-110.dp, -110.dp),  // Top left
+        Pair(110.dp, -100.dp),   // Top right
+        Pair(-100.dp, 110.dp),   // Bottom left
+        Pair(120.dp, 120.dp)     // Bottom right
     )
 
     emojis.forEachIndexed { index, emoji ->
@@ -483,7 +439,7 @@ fun PageIndicators(
                     .width(width)
                     .height(10.dp),
                 shape = RoundedCornerShape(5.dp),
-                color = if (isActive) Color.White else Color.White.copy(alpha = 0.4f),
+                color = if (isActive) Color(0xFF3F51B5) else Color(0xFF3F51B5).copy(alpha = 0.3f),
                 onClick = { onPageClick(index) }
             ) {}
         }
@@ -499,9 +455,7 @@ fun NavigationButtons(
     onGetStarted: () -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 40.dp),
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Back button
@@ -510,22 +464,21 @@ fun NavigationButtons(
             enter = fadeIn() + expandHorizontally(),
             exit = fadeOut() + shrinkHorizontally()
         ) {
-            Button(
+            OutlinedButton(
                 onClick = onBack,
                 modifier = Modifier
                     .weight(1f)
                     .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White.copy(alpha = 0.2f)
-                ),
                 shape = RoundedCornerShape(16.dp),
-                border = androidx.compose.foundation.BorderStroke(2.dp, Color.White.copy(alpha = 0.3f))
+                border = androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF3F51B5).copy(alpha = 0.3f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = Color(0xFF3F51B5)
+                )
             ) {
                 Text(
                     text = "Back",
                     fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
@@ -537,19 +490,19 @@ fun NavigationButtons(
                 .weight(1f)
                 .height(56.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color.White
+                containerColor = Color(0xFF3F51B5)
             ),
             shape = RoundedCornerShape(16.dp),
             elevation = ButtonDefaults.buttonElevation(
-                defaultElevation = 10.dp,
-                pressedElevation = 15.dp
+                defaultElevation = 4.dp,
+                pressedElevation = 8.dp
             )
         ) {
             Text(
                 text = if (currentPage == totalPages - 1) "Get Started" else "Next",
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF667eea),
+                color = Color.White,
                 letterSpacing = 0.5.sp
             )
         }

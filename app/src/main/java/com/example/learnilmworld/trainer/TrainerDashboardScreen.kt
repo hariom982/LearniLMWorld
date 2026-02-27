@@ -21,6 +21,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -88,8 +90,9 @@ fun TrainerDashboardScreen(viewModel: AuthViewModel,navController: NavHostContro
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF8C56E8),
-                        Color(0xFFA67DEF)
+                        Color(0xFF3F51B5),
+                        Color(0xFF6073E3),
+                        Color(0xFFFFF5E1)
                     )
                 )
             )
@@ -164,6 +167,7 @@ fun WelcomeHeader(trainerName: String) {
                     text = "Welcome back, $trainerName!",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.SansSerif,
                     color = Color(0xFF2D2D44)
                 )
 
@@ -172,6 +176,7 @@ fun WelcomeHeader(trainerName: String) {
                 Text(
                     text = "Empower your students and grow your teaching journey",
                     fontSize = 14.sp,
+                    fontFamily = FontFamily.SansSerif,
                     color = Color(0xFF6B7280),
                     lineHeight = 18.sp
                 )
@@ -249,6 +254,7 @@ fun RecentBookingsSection(navController: NavHostController) {
                     text = "Recent Bookings",
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
+                    fontFamily = FontFamily.SansSerif,
                     color = Color(0xFF2D2D44)
                 )
 
@@ -306,7 +312,7 @@ fun RecentBookingsSection(navController: NavHostController) {
                     modifier = Modifier
                         .padding(horizontal = 32.dp)
                         .height(52.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF8C42)),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
                     shape = RoundedCornerShape(14.dp),
                     elevation = ButtonDefaults.buttonElevation(
                         defaultElevation = 6.dp,

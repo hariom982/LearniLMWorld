@@ -77,8 +77,9 @@ fun TrainerStudentsScreen() {
             .fillMaxSize()
             .background( brush = Brush.verticalGradient(
                 colors = listOf(
-                    Color(0xFFD4A574),
-                    Color(0xFFE6B87D)
+                    Color(0xFF3F51B5),
+                    Color(0xFF6073E3),
+                    Color(0xFFFFF5E1)
                 )
             ))
     ) {
@@ -89,8 +90,8 @@ fun TrainerStudentsScreen() {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFD4A574)
-                ),
+                    containerColor = Color(0xFF3F51B5)
+                    ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 8.dp
                 )
@@ -106,34 +107,8 @@ fun TrainerStudentsScreen() {
                         text = "My Students",
                         fontSize = 25.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = Color(0xFF2D2D44)
+                        color = Color.White
                     )
-
-                    Button(
-                        onClick = { /* Create session */ },
-                        modifier = Modifier.height(35.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF3D3D5C)
-                        ),
-                        shape = RoundedCornerShape(16.dp),
-                        elevation = ButtonDefaults.buttonElevation(
-                            defaultElevation = 6.dp
-                        )
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            tint = Color(0xFFB8E986),
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Create Session",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFB8E986)
-                        )
-                    }
                 }
             }
 

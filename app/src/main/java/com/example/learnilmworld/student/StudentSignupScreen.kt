@@ -98,6 +98,23 @@ fun StudentSignupScreen(navController: NavHostController,
 //            else -> {}
 //        }
 //    }
+    LaunchedEffect(authState) {
+        when (val state = authState) {
+            is AuthState.Success -> {
+                Toast.makeText(context, "Account created successfully!", Toast.LENGTH_SHORT).show()
+                // Navigate to onboarding instead of directly to home
+                navController.navigate("student_onboarding/$email") {
+                    popUpTo("student_signup") { inclusive = true }
+                }
+                viewModel.resetState()
+            }
+            is AuthState.Error -> {
+                Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                viewModel.resetState()
+            }
+            else -> {}
+        }
+    }
 
     fun validateFields(): Boolean {
         firstNameError = firstName.isBlank()
@@ -117,9 +134,9 @@ fun StudentSignupScreen(navController: NavHostController,
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                        Color(0xFFf093fb)
+                        Color(0xFFFFFFFF),
+                        Color(0xFF2E52D9),
+                        Color(0xFF2E52D9)
                     )
                 )
             )
@@ -151,7 +168,7 @@ fun StudentSignupScreen(navController: NavHostController,
             SignupHeader(
                 emoji = "🎓",
                 title = "Student Sign Up",
-                subtitle = "Start your language learning journey"
+                subtitle = "Start your learning journey"
             )
 
             Spacer(modifier = Modifier.height(32.dp))

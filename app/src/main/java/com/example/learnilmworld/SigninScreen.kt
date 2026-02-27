@@ -113,9 +113,9 @@ fun SigninScreen(navController: NavHostController,
             .background(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color(0xFF667eea),
-                        Color(0xFF764ba2),
-                        Color(0xFFf093fb)
+                        Color(0xFFFFFFFF),
+                        Color(0xFF2E52D9),
+                        Color(0xFF2E52D9)
                     )
                 )
             )

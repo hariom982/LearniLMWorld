@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,6 +57,7 @@ data class SessionRequest(
 fun SessionsScreen() {
     var sessionRequests by remember { mutableStateOf<List<SessionRequest>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    // Default to "All" tab (index 0)
     var selectedTab by remember { mutableStateOf(0) }
 
     val context = LocalContext.current
@@ -94,7 +97,11 @@ fun SessionsScreen() {
                         createdAt = doc.getLong("createdAt") ?: 0L,
                         updatedAt = doc.getLong("updatedAt") ?: 0L
                     )
-                }.sortedByDescending { it.createdAt }
+                    // Sort all sessions by most recent activity:
+                    // updatedAt takes priority; fall back to createdAt if updatedAt is 0
+                }.sortedByDescending { session ->
+                    if (session.updatedAt > 0L) session.updatedAt else session.createdAt
+                }
             }
             isLoading = false
         } catch (e: Exception) {
@@ -103,13 +110,16 @@ fun SessionsScreen() {
         }
     }
 
-    val tabs = listOf("Pending", "Confirmed", "Completed", "Rejected")
+    // "All" is index 0; status-specific tabs follow
+    val tabs = listOf("All", "Pending", "Confirmed", "Completed", "Rejected")
+
     val filteredSessions = remember(sessionRequests, selectedTab) {
         when (selectedTab) {
-            0 -> sessionRequests.filter { it.status == "pending" }
-            1 -> sessionRequests.filter { it.status == "confirmed" }
-            2 -> sessionRequests.filter { it.status == "completed" }
-            3 -> sessionRequests.filter { it.status == "rejected" }
+            0 -> sessionRequests // "All" — already sorted by recent activity
+            1 -> sessionRequests.filter { it.status == "pending" }
+            2 -> sessionRequests.filter { it.status == "confirmed" }
+            3 -> sessionRequests.filter { it.status == "completed" }
+            4 -> sessionRequests.filter { it.status == "rejected" }
             else -> sessionRequests
         }
     }
@@ -120,8 +130,9 @@ fun SessionsScreen() {
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFF8C56E8),
-                        Color(0xFFA67DEF)
+                        Color(0xFF3F51B5),
+                        Color(0xFF6073E3),
+                        Color(0xFFFFF5E1)
                     )
                 )
             )
@@ -129,9 +140,18 @@ fun SessionsScreen() {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header
             Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFF8C56E8),
-                shadowElevation = 4.dp
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF3F51B5),
+                                Color(0xFF6073E3),
+                            )
+                        )
+                    ),
+                shadowElevation = 4.dp,
+                color = Color.Transparent
             ) {
                 Column(
                     modifier = Modifier
@@ -142,22 +162,23 @@ fun SessionsScreen() {
                         text = "My Sessions",
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF2D2D44)
+                        color = Color.White,
+                        fontFamily = FontFamily.SansSerif
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Tabs
+                    // Tabs — now 5 items, scrollable
                     ScrollableTabRow(
                         selectedTabIndex = selectedTab,
                         containerColor = Color.Transparent,
-                        contentColor = Color(0xFF2D2D44),
+                        contentColor = Color.White,
                         edgePadding = 0.dp,
                         indicator = { tabPositions ->
                             if (selectedTab < tabPositions.size) {
                                 TabRowDefaults.SecondaryIndicator(
                                     modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
-                                    color = Color(0xFF2D2D44),
+                                    color = Color.Yellow,
                                     height = 3.dp
                                 )
                             }
@@ -168,10 +189,41 @@ fun SessionsScreen() {
                                 selected = selectedTab == index,
                                 onClick = { selectedTab = index },
                                 text = {
-                                    Text(
-                                        text = title,
-                                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal
-                                    )
+                                    // Show session count badge next to "All"
+                                    if (index == 0 && sessionRequests.isNotEmpty()) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Text(
+                                                text = title,
+                                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (selectedTab == index) Color.Yellow else Color.White
+                                            )
+                                            // Count badge
+                                            Surface(
+                                                shape = CircleShape,
+                                                color = if (selectedTab == index)
+                                                    Color.Yellow.copy(alpha = 0.25f)
+                                                else
+                                                    Color.White.copy(alpha = 0.2f)
+                                            ) {
+                                                Text(
+                                                    text = "${sessionRequests.size}",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = if (selectedTab == index) Color.Yellow else Color.White,
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+                                    } else {
+                                        Text(
+                                            text = title,
+                                            fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (selectedTab == index) Color.Yellow else Color.White
+                                        )
+                                    }
                                 }
                             )
                         }
@@ -195,10 +247,11 @@ fun SessionsScreen() {
                 filteredSessions.isEmpty() -> {
                     EmptySessionsState(
                         message = when (selectedTab) {
-                            0 -> "No pending session requests"
-                            1 -> "No confirmed sessions yet"
-                            2 -> "No completed sessions"
-                            3 -> "No rejected requests"
+                            0 -> "You have no sessions yet"
+                            1 -> "No pending session requests"
+                            2 -> "No confirmed sessions yet"
+                            3 -> "No completed sessions"
+                            4 -> "No rejected requests"
                             else -> "No sessions found"
                         }
                     )
@@ -209,12 +262,28 @@ fun SessionsScreen() {
                         contentPadding = PaddingValues(24.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(filteredSessions) { session ->
+                        items(
+                            items = filteredSessions,
+                            // Stable key prevents unnecessary recompositions
+                            key = { it.id }
+                        ) { session ->
                             StudentSessionCard(
                                 session = session,
                                 dateFormat = dateFormat,
                                 onJoinSession = {
                                     // Navigate to video call
+                                    if (session.roomId.isNotEmpty()) {
+
+                                        com.example.learnilmworld.VideoCallActivity.startMeeting(
+                                            context = context,
+                                            callID = session.roomId,
+                                            userID = session.studentId,
+                                            userName = session.studentName
+                                        )
+
+                                    } else {
+                                        Toast.makeText(context, "Room not created yet", Toast.LENGTH_SHORT).show()
+                                    }
                                 }
                             )
                         }
@@ -238,6 +307,7 @@ fun StudentSessionCard(
     val context = LocalContext.current
     var showMeetingLinkDialog by remember { mutableStateOf(false) }
     val currentUser = FirebaseAuth.getInstance().currentUser
+
     if (showMeetingLinkDialog && session.meetingLink.isNotEmpty()) {
         MeetingLinkDialogStudent(
             meetingLink = session.meetingLink,
@@ -249,29 +319,17 @@ fun StudentSessionCard(
                 if (session.roomName.isNotEmpty()) {
                     com.example.learnilmworld.VideoCallActivity.startMeeting(
                         context = context,
-                        callID = session.id,           // Use your sessionRequest.id as the unique call/room ID
-                        userID = session.studentId,      // Or trainerId/studentId depending on who is joining
-                        userName = session.studentName     // trainerName or studentName
+                        callID = session.roomId,
+                        userID = session.studentId,
+                        userName = session.studentName,
                     )
                 } else {
                     Toast.makeText(context, "Meeting room not found", Toast.LENGTH_SHORT).show()
                 }
-            },
-//            onCopy = {
-//                com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
-//                    context = context,
-//                    meetingLink = session.meetingLink
-//                )
-//            },
-//            onShare = {
-//                com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
-//                    context = context,
-//                    meetingLink = session.meetingLink,
-//                    sessionTitle = "Session with ${session.trainerName}"
-//                )
-//            }
+            }
         )
     }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -290,7 +348,10 @@ fun StudentSessionCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
                         text = "Session with ${session.trainerName}",
                         fontSize = 18.sp,
@@ -307,15 +368,17 @@ fun StudentSessionCard(
                     }
                 }
 
+                Spacer(modifier = Modifier.width(8.dp))
+
                 // Status Badge
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = when (session.status) {
-                        "pending" -> Color(0xFFFEF3C7)
+                        "pending"   -> Color(0xFFFEF3C7)
                         "confirmed" -> Color(0xFFDBEAFE)
                         "completed" -> Color(0xFFE5E7EB)
-                        "rejected" -> Color(0xFFFFE5E5)
-                        else -> Color(0xFFF3F4F6)
+                        "rejected"  -> Color(0xFFFFE5E5)
+                        else        -> Color(0xFFF3F4F6)
                     }
                 ) {
                     Text(
@@ -323,11 +386,11 @@ fun StudentSessionCard(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = when (session.status) {
-                            "pending" -> Color(0xFF92400E)
+                            "pending"   -> Color(0xFF92400E)
                             "confirmed" -> Color(0xFF1E40AF)
                             "completed" -> Color(0xFF374151)
-                            "rejected" -> Color(0xFFEF4444)
-                            else -> Color(0xFF6B7280)
+                            "rejected"  -> Color(0xFFEF4444)
+                            else        -> Color(0xFF6B7280)
                         },
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
@@ -434,11 +497,11 @@ fun StudentSessionCard(
                 "confirmed" -> {
                     Button(
                         onClick = {
-                            com.example.learnilmworld.VideoCallActivity.startMeeting(  // or VideoCallActivity if you renamed it
+                            com.example.learnilmworld.VideoCallActivity.startMeeting(
                                 context = context,
-                                callID = session.id,
+                                callID = session.roomId,
                                 userID = session.studentId,
-                                userName = session.studentName  // or fetch from Firestore if needed
+                                userName = session.studentName
                             )
                         },
                         modifier = Modifier
@@ -488,7 +551,7 @@ fun StudentSessionCard(
                 }
             }
 
-            // Room ID for confirmed sessions
+            // Room ID & Meeting Link for confirmed sessions
             if (session.status == "confirmed") {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -531,12 +594,7 @@ fun StudentSessionCard(
 
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                     IconButton(
-                                        onClick = {
-//                                            com.example.learnilmworld.utils.JitsiMeetingManager.copyMeetingLink(
-//                                                context = context,
-//                                                meetingLink = session.meetingLink
-//                                            )
-                                        },
+                                        onClick = { /* copy */ },
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Icon(
@@ -548,13 +606,7 @@ fun StudentSessionCard(
                                     }
 
                                     IconButton(
-                                        onClick = {
-//                                            com.example.learnilmworld.utils.JitsiMeetingManager.shareMeetingLink(
-//                                                context = context,
-//                                                meetingLink = session.meetingLink,
-//                                                sessionTitle = "Session with ${session.trainerName}"
-//                                            )
-                                        },
+                                        onClick = { /* share */ },
                                         modifier = Modifier.size(32.dp)
                                     ) {
                                         Icon(
@@ -623,9 +675,7 @@ fun MeetingLinkDialogStudent(
     sessionTitle: String,
     userName: String,
     onDismiss: () -> Unit,
-    onJoin: () -> Unit,
-//    onCopy: () -> Unit,
-//    onShare: () -> Unit
+    onJoin: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -712,105 +762,33 @@ fun MeetingLinkDialogStudent(
                     )
                 }
 
-                // Action buttons
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                // Join button
+                Button(
+                    onClick = {
+                        onJoin()
+                        onDismiss()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFB8E986)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    // Join button
-                    Button(
-                        onClick = {
-                            onJoin()
-                            onDismiss()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFB8E986)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Videocam,
-                            contentDescription = null,
-                            tint = Color(0xFF2D2D44),
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "Join Now",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF2D2D44)
-                        )
-                    }
-
-                    // Secondary actions
-//                    Row(
-//                        modifier = Modifier.fillMaxWidth(),
-//                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-//                    ) {
-//                        OutlinedButton(
-//                            onClick = {
-//                                onCopy()
-//                            },
-//                            modifier = Modifier
-//                                .weight(1f)
-//                                .height(48.dp),
-//                            colors = ButtonDefaults.outlinedButtonColors(
-//                                containerColor = Color.Transparent
-//                            ),
-//                            border = androidx.compose.foundation.BorderStroke(
-//                                1.5.dp,
-//                                Color(0xFFE5E7EB)
-//                            ),
-//                            shape = RoundedCornerShape(12.dp)
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.ContentCopy,
-//                                contentDescription = null,
-//                                tint = Color(0xFF6B7280),
-//                                modifier = Modifier.size(20.dp)
-//                            )
-//                            Spacer(modifier = Modifier.width(8.dp))
-//                            Text(
-//                                text = "Copy",
-//                                fontSize = 14.sp,
-//                                color = Color(0xFF2D2D44)
-//                            )
-//                        }
-//
-//                        OutlinedButton(
-//                            onClick = {
-//                                onShare()
-//                            },
-//                            modifier = Modifier
-//                                .weight(1f)
-//                                .height(48.dp),
-//                            colors = ButtonDefaults.outlinedButtonColors(
-//                                containerColor = Color.Transparent
-//                            ),
-//                            border = androidx.compose.foundation.BorderStroke(
-//                                1.5.dp,
-//                                Color(0xFFE5E7EB)
-//                            ),
-//                            shape = RoundedCornerShape(12.dp)
-//                        ) {
-//                            Icon(
-//                                imageVector = Icons.Default.Share,
-//                                contentDescription = null,
-//                                tint = Color(0xFF6B7280),
-//                                modifier = Modifier.size(20.dp)
-//                            )
-//                            Spacer(modifier = Modifier.width(8.dp))
-//                            Text(
-//                                text = "Share",
-//                                fontSize = 14.sp,
-//                                color = Color(0xFF2D2D44)
-//                            )
-//                        }
-//                    }
+                    Icon(
+                        imageVector = Icons.Default.Videocam,
+                        contentDescription = null,
+                        tint = Color(0xFF2D2D44),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "Join Now",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2D2D44)
+                    )
                 }
             }
         }

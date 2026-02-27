@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.LearniLMWorld" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+
+    <style name="Theme.LearniLMWorld"
+        parent="Theme.MaterialComponents.DayNight.NoActionBar">
+
+        <!-- Status bar background -->
+        <item name="android:statusBarColor">@color/status_bar_color</item>
+
+        <!-- Status bar icons: false = white icons, true = dark icons -->
+        <item name="android:windowLightStatusBar">false</item>
+
+    </style>
+
 </resources>

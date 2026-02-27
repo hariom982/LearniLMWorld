@@ -6,7 +6,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object ApiClient {
 //    private const val BASE_URL = "http://192.168.29.124:5000/api/" // e.g. https://myapp-backend.onrender.com/api/
-    private const val BASE_URL = "http://192.168.29.124:3000/api/" // e.g. https://myapp-backend.onrender.com/api/
+//    private const val BASE_URL = "https://learnilmworld-backend-4.onrender.com/api/" // e.g. https://myapp-backend.onrender.com/api/
+    private const val BASE_URL = "https://learnilmworld-backend-4.onrender.com/api/" // e.g. https://myapp-backend.onrender.com/api/
 
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)

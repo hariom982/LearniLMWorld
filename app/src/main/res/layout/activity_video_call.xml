@@ -1,6 +1,428 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/fragment_container"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-</FrameLayout>
+    android:layout_height="match_parent"
+    android:background="#0D0F14">
+
+    <!-- ═══════════════════════════════════════════
+         REMOTE VIDEO — full screen background
+    ════════════════════════════════════════════ -->
+    <live.hms.videoview.HMSVideoView
+        android:id="@+id/remoteVideoView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:ignore="MissingClass"
+        tools:background="#1A1D24" />
+
+    <!-- Gradient scrim — top (for top bar readability) -->
+    <View
+        android:id="@+id/topScrim"
+        android:layout_width="0dp"
+        android:layout_height="120dp"
+        android:background="@drawable/scrim_top"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Gradient scrim — bottom (for controls readability) -->
+    <View
+        android:id="@+id/bottomScrim"
+        android:layout_width="0dp"
+        android:layout_height="160dp"
+        android:background="@drawable/scrim_bottom"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- ═══════════════════════════════════════════
+         TOP BAR — session info
+    ════════════════════════════════════════════ -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/topBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="48dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Session title -->
+        <TextView
+            android:id="@+id/tvSessionTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Session in Progress"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.01"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/tvTimer"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <!-- Live timer pill -->
+        <TextView
+            android:id="@+id/tvTimer"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:paddingHorizontal="12dp"
+            android:background="@drawable/bg_timer_pill"
+            app:layout_constraintEnd_toStartOf="@id/btnTopMore"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginEnd="8dp" />
+
+        <!-- More options -->
+        <ImageButton
+            android:id="@+id/btnTopMore"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_icon_btn"
+            android:src="@drawable/ic_more_vert"
+            android:padding="6dp"
+            app:tint="#FFFFFF"
+            android:contentDescription="More options"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ═══════════════════════════════════════════
+         REMOTE AVATAR (shown when remote cam is off)
+    ════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/remoteAvatarContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/tvRemoteAvatar"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:text="T"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:background="@drawable/bg_avatar_circle" />
+
+        <TextView
+            android:id="@+id/tvRemoteName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trainer"
+            android:textColor="#E0E0E0"
+            android:textSize="15sp"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Camera is off"
+            android:textColor="#9E9E9E"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp" />
+
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════
+         LOCAL VIDEO — picture-in-picture
+    ════════════════════════════════════════════ -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/localVideoCard"
+        android:layout_width="110dp"
+        android:layout_height="160dp"
+        android:layout_marginTop="108dp"
+        android:layout_marginEnd="16dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#1E2029">
+
+            <!-- Local video feed -->
+            <live.hms.videoview.HMSVideoView
+                android:id="@+id/localVideoView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:ignore="MissingClass" />
+
+            <!-- Local cam-off avatar -->
+            <TextView
+                android:id="@+id/tvLocalAvatar"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:text="Y"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:background="@drawable/bg_avatar_circle"
+                android:visibility="gone"
+                android:layout_gravity="center" />
+
+            <!-- "You" label -->
+            <TextView
+                android:id="@+id/tvPipLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium"
+                android:background="@drawable/bg_you_label"
+                android:paddingHorizontal="6dp"
+                android:paddingVertical="3dp"
+                android:layout_gravity="bottom|start"
+                android:layout_margin="6dp" />
+
+            <!-- Local mic indicator -->
+            <ImageView
+                android:id="@+id/ivLocalMicStatus"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_mic"
+                app:tint="#FFFFFF"
+                android:layout_gravity="top|end"
+                android:layout_margin="6dp"
+                android:visibility="gone" />
+
+        </FrameLayout>
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- ═══════════════════════════════════════════
+         SCREEN SHARE BANNER (shown during share)
+    ════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/screenShareBanner"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_screenshare_banner"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="10dp"
+        android:visibility="gone"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginBottom="12dp"
+        app:layout_constraintBottom_toTopOf="@id/controlsContainer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_screen_share"
+            app:tint="#4FC3F7" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="You are sharing your screen"
+            android:textColor="#E0E0E0"
+            android:textSize="13sp"
+            android:layout_marginStart="10dp" />
+
+        <TextView
+            android:id="@+id/btnStopShare"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop"
+            android:textColor="#F48FB1"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            android:padding="4dp" />
+
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════
+         BOTTOM CONTROLS
+    ════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/controlsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
+        android:paddingBottom="36dp"
+        android:paddingTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Mic toggle -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnToggleMic"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_control_btn_active"
+                android:src="@drawable/ic_mic"
+                android:padding="14dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Toggle microphone" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mic"
+                android:textColor="#B0BEC5"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
+
+        <!-- Camera toggle -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnToggleCamera"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_control_btn_active"
+                android:src="@drawable/ic_video_call"
+                android:padding="14dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Toggle camera" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Camera"
+                android:textColor="#B0BEC5"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
+
+        <!-- END CALL — center, prominent red -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnHangUp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="@drawable/bg_end_call_btn"
+                android:src="@drawable/ic_call_end"
+                android:padding="16dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="End call" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="End"
+                android:textColor="#EF9A9A"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
+
+        <!-- Screen share -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnScreenShare"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_control_btn_active"
+                android:src="@drawable/ic_screen_share"
+                android:padding="14dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Share screen" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Share"
+                android:textColor="#B0BEC5"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
+
+        <!-- Flip camera -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnFlipCamera"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:background="@drawable/bg_control_btn_active"
+                android:src="@drawable/ic_flip"
+                android:padding="14dp"
+                app:tint="#FFFFFF"
+                android:contentDescription="Flip camera" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Flip"
+                android:textColor="#B0BEC5"
+                android:textSize="11sp"
+                android:layout_marginTop="6dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -275,31 +275,31 @@ fun BookingDialog(
                     }
                 }
 
-                // Language
-                item {
-                    AnimatedVisibility(visible = description.isNotEmpty()) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text(
-                                text = "Language",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF2D2D44)
-                            )
-
-                            OutlinedTextField(
-                                value = language,
-                                onValueChange = { language = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("e.g., Spanish, French, etc.") },
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                        }
-                    }
-                }
+//                // Language
+//                item {
+//                    AnimatedVisibility(visible = description.isNotEmpty()) {
+//                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+//                            Text(
+//                                text = "Language",
+//                                fontSize = 16.sp,
+//                                fontWeight = FontWeight.SemiBold,
+//                                color = Color(0xFF2D2D44)
+//                            )
+//
+//                            OutlinedTextField(
+//                                value = language,
+//                                onValueChange = { language = it },
+//                                modifier = Modifier.fillMaxWidth(),
+//                                placeholder = { Text("e.g., Spanish, French, etc.") },
+//                                shape = RoundedCornerShape(12.dp)
+//                            )
+//                        }
+//                    }
+//                }
 
                 // Level Selection
                 item {
-                    AnimatedVisibility(visible = language.isNotEmpty()) {
+                    AnimatedVisibility(visible = description.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(
                                 text = "Your Level",
@@ -339,7 +339,7 @@ fun BookingDialog(
                 item {
                     AnimatedVisibility(
                         visible = selectedDate != null && selectedTimeSlot != null &&
-                                description.isNotEmpty() && language.isNotEmpty()
+                                description.isNotEmpty()
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             // Summary Card
